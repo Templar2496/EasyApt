@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Find a provider</h2>
+<form method="get" action="/appointments/providers" style="margin-bottom:1rem">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search by name or specialty">
+  <button>Search</button>
+</form>
+<ul>
+  {% for p in providers %}
+    <li>
+      <a href="/appointments/providers/{{ p.slug }}">{{ p.name }}</a>
+      {% if p.specialty %} — {{ p.specialty }}{% endif %}
+      {% if p.clinic %} ({{ p.clinic.name }}){% endif %}
+    </li>
+  {% else %}
+    <li>No providers yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

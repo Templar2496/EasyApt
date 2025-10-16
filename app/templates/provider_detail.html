@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ provider.name }}</h2>
+<p>
+  {% if provider.specialty %}Specialty: {{ provider.specialty }} · {% endif %}
+  {% if provider.clinic %}Clinic: {{ provider.clinic.name }}{% endif %}
+</p>
+
+{% if request.query_params.get("ok") == "booked" %}
+  <p style="color:#070">Appointment booked!</p>
+{% elif request.query_params.get("err") == "conflict" %}
+  <p style="color:#b00">Sorry, that slot was just taken. Pick another.</p>
+{% endif %}
+
+<h3>Available slots ({{ start.date() }} → {{ end.date() }})</h3>
+{% if day_slots %}
+  {% for day, slots in day_slots %}
+    <h4 style="margin:.8rem 0 0">{{ day }}</h4>
+    <ul>
+      {% for s,e in slots %}
+      <li>
+        {{ s.strftime("%I:%M %p") }} — {{ e.strftime("%I:%M %p") }}
+        <form method="post" action="/appointments/providers/{{ provider.slug }}/book" style="display:inline">
+          <input type="hidden" name="slot_start" value="{{ s.isoformat() }}">
+          <input type="email" name="patient_email" placeholder="you@example.com" required>
+          <button>Book</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endfor %}
+{% else %}
+  <p>No open slots in this window.</p>
+{% endif %}
+{% endblock %}

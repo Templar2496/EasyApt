@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Create account</h2>
+<form method="post" action="/auth/register">
+  <label>Email <input type="email" name="email" required></label>
+  <label>Password <input type="password" name="password" required></label>
+  <button type="submit">Register</button>
+</form>
+{% if request.query_params.get("err") == "exists" %}
+  <p style="color:#b00">An account with that email already exists.</p>
+{% endif %}
+{% endblock %}
