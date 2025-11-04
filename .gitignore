@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Project
+backend/.env
+infra/postgres_data/
+dist/
+.coverage
+.pytest_cache/
