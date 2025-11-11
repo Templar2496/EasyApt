@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Login</h2>
+<form method="post" action="/auth/login">
+  <label>Email <input type="email" name="email" required></label>
+  <label>Password <input type="password" name="password" required></label>
+  <button type="submit">Login</button>
+</form>
+{% if request.query_params.get("err") == "invalid" %}
+  <p style="color:#b00">Invalid email or password.</p>
+{% endif %}
+{% if request.query_params.get("ok") == "registered" %}
+  <p style="color:#070">Registration successful. Please log in.</p>
+{% endif %}
+{% endblock %}

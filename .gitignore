@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Python
 __pycache__/
 *.pyc
@@ -10,3 +11,4 @@ infra/postgres_data/
 dist/
 .coverage
 .pytest_cache/
+

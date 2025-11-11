@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>{{ title or "Healthcare Scheduler" }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <style>
+      body{font-family:system-ui,Arial,sans-serif;max-width:800px;margin:2rem auto;padding:0 1rem}
+      nav a{margin-right:.75rem}
+      form{display:grid;gap:.5rem;max-width:380px}
+      input,button{padding:.5rem .6rem}
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/auth/register">Register</a>
+      <a href="/auth/login">Login</a>
+      <a href="/portal">Portal</a>
+      <a href="/appointments/providers">Providers</a>
+    </nav>
+    <hr/>
+    {% block content %}{% endblock %}
+  </body>
+</html>
