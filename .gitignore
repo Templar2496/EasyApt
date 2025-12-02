@@ -1,0 +1,7 @@
+jobs.sqlite
+venv/
+__pycache__/
+*.zip
+*.log
+.env
+.DS_Store
