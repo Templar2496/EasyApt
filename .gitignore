@@ -1,3 +1,4 @@
+HEAD
 jobs.sqlite
 venv/
 __pycache__/
@@ -5,3 +6,18 @@ __pycache__/
 *.log
 .env
 .DS_Store
+HEAD
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Project
+backend/.env
+infra/postgres_data/
+dist/
+.coverage
+.pytest_cache/
+
+ff9e6f02be88c1786939a9f2fca2d05b991e0df2
