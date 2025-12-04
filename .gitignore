@@ -1,4 +1,12 @@
-<<<<<<< HEAD
+HEAD
+jobs.sqlite
+venv/
+__pycache__/
+*.zip
+*.log
+.env
+.DS_Store
+HEAD
 # Python
 __pycache__/
 *.pyc
@@ -12,3 +20,4 @@ dist/
 .coverage
 .pytest_cache/
 
+ff9e6f02be88c1786939a9f2fca2d05b991e0df2
