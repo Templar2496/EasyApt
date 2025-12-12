@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Provider Dashboard - EasyApt</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="container">
+      <div class="nav-links">
+        <span class="nav-brand">EasyApt Provider</span>
+        <a href="/provider-dashboard.html">Dashboard</a>
+        <a href="#" id="logout-link">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="card-title">Provider Dashboard</h1>
+        <p class="text-muted">View your upcoming appointments</p>
+      </div>
+
+      <div id="message" class="hidden"></div>
+
+      <div id="loading" class="text-center">
+        <div class="spinner"></div>
+        <p class="text-muted">Loading your appointments...</p>
+      </div>
+
+      <div id="appointments-container" class="hidden">
+        <div id="appointments-list"></div>
+        
+        <div id="no-appointments" class="text-center hidden" style="padding: 40px;">
+          <p class="text-muted">You have no upcoming appointments.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <h3>Quick Stats</h3>
+      <div class="grid grid-3" style="margin-top: 16px;">
+        <div class="card" style="text-align: center;">
+          <h2 id="total-appointments" style="color: var(--primary-color); margin: 0;">-</h2>
+          <p class="text-muted" style="margin: 8px 0 0 0;">Total Appointments</p>
+        </div>
+        <div class="card" style="text-align: center;">
+          <h2 id="today-appointments" style="color: var(--success-color); margin: 0;">-</h2>
+          <p class="text-muted" style="margin: 8px 0 0 0;">Today</p>
+        </div>
+        <div class="card" style="text-align: center;">
+          <h2 id="upcoming-appointments" style="color: var(--text-secondary); margin: 0;">-</h2>
+          <p class="text-muted" style="margin: 8px 0 0 0;">This Week</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { 
+      providers, 
+      auth,
+      requireAuth, 
+      showError, 
+      showInfo,
+      formatDateTime,
+      formatDate,
+      formatTime
+    } from './js/api.js';
+
+    if (!requireAuth()) {
+      throw new Error('Not authenticated');
+    }
+
+    const loadingDiv = document.getElementById('loading');
+    const appointmentsContainer = document.getElementById('appointments-container');
+    const appointmentsList = document.getElementById('appointments-list');
+    const noAppointments = document.getElementById('no-appointments');
+    const logoutLink = document.getElementById('logout-link');
+
+    logoutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm('Are you sure you want to logout?')) {
+        auth.logout();
+      }
+    });
+
+    async function loadProviderAppointments() {
+      try {
+        loadingDiv.classList.remove('hidden');
+        appointmentsContainer.classList.add('hidden');
+
+        const data = await providers.getDashboard();
+
+        loadingDiv.classList.add('hidden');
+        appointmentsContainer.classList.remove('hidden');
+
+        if (!data || data.length === 0) {
+          noAppointments.classList.remove('hidden');
+          updateStats(0, 0, 0);
+          return;
+        }
+
+        noAppointments.classList.add('hidden');
+        
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        
+        const todayCount = data.filter(appt => 
+          appt.start_time && appt.start_time.startsWith(today)
+        ).length;
+        
+        const weekCount = data.filter(appt => {
+          if (!appt.start_time) return false;
+          const apptDate = new Date(appt.start_time);
+          return apptDate >= now && apptDate <= nextWeek;
+        }).length;
+        
+        updateStats(data.length, todayCount, weekCount);
+
+        const appointmentsByDate = {};
+        
+        data.forEach(appt => {
+          const date = appt.start_time ? appt.start_time.split('T')[0] : 'Unknown';
+          if (!appointmentsByDate[date]) {
+            appointmentsByDate[date] = [];
+          }
+          appointmentsByDate[date].push(appt);
+        });
+
+        appointmentsList.innerHTML = '';
+
+        const sortedDates = Object.keys(appointmentsByDate).sort();
+
+        sortedDates.forEach(date => {
+          const dateSection = document.createElement('div');
+          dateSection.style.marginBottom = '24px';
+          
+          const dateHeader = document.createElement('h3');
+          dateHeader.textContent = formatDate(date + 'T00:00:00');
+          dateHeader.style.marginBottom = '12px';
+          dateHeader.style.paddingBottom = '8px';
+          dateHeader.style.borderBottom = '2px solid var(--border-color)';
+          
+          if (date === today) {
+            dateHeader.textContent += ' (Today)';
+            dateHeader.style.color = 'var(--success-color)';
+          }
+          
+          dateSection.appendChild(dateHeader);
+
+          const sortedAppts = appointmentsByDate[date].sort((a, b) => {
+            if (!a.start_time) return 1;
+            if (!b.start_time) return -1;
+            return a.start_time.localeCompare(b.start_time);
+          });
+
+          sortedAppts.forEach(appt => {
+            const apptCard = document.createElement('div');
+            apptCard.className = 'card';
+            apptCard.style.marginBottom = '12px';
+            
+            const content = `
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
+                  <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">
+                    ${appt.patient_name || 'Patient Name Not Available'}
+                  </div>
+                  <div style="color: var(--text-secondary); margin-bottom: 4px;">
+                    <strong>Time:</strong> ${formatTime(appt.start_time)}
+                  </div>
+                  ${appt.reason ? `
+                    <div style="color: var(--text-secondary); margin-bottom: 4px;">
+                      <strong>Reason:</strong> ${appt.reason}
+                    </div>
+                  ` : ''}
+                  <div style="margin-top: 8px;">
+                    <span style="
+                      display: inline-block;
+                      padding: 4px 8px;
+                      background: ${appt.status === 'booked' ? '#d1fae5' : '#fee2e2'};
+                      color: ${appt.status === 'booked' ? '#065f46' : '#991b1b'};
+                      border-radius: 4px;
+                      font-size: 0.85rem;
+                      font-weight: 500;
+                    ">
+                      ${appt.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            `;
+            
+            apptCard.innerHTML = content;
+            dateSection.appendChild(apptCard);
+          });
+
+          appointmentsList.appendChild(dateSection);
+        });
+
+      } catch (error) {
+        console.error('Error loading appointments:', error);
+        loadingDiv.classList.add('hidden');
+        
+        if (error.message && error.message.includes('401')) {
+          showError('message', 'You are not authorized to view the provider dashboard. Please make sure you are logged in as a provider.');
+          setTimeout(() => {
+            window.location.href = '/login.html';
+          }, 3000);
+        } else {
+          showError('message', error.message || 'Error loading appointments');
+        }
+      }
+    }
+
+    function updateStats(total, today, week) {
+      document.getElementById('total-appointments').textContent = total;
+      document.getElementById('today-appointments').textContent = today;
+      document.getElementById('upcoming-appointments').textContent = week;
+    }
+
+    loadProviderAppointments();
+  </script>
+</body>
+</html>

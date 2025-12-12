@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EasyApt - Healthcare Appointment Scheduling</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="container">
+      <div class="nav-links">
+        <span class="nav-brand">EasyApt</span>
+        <a href="/">Home</a>
+        <a href="/login.html">Login</a>
+        <a href="/register.html">Create Account</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card text-center">
+      <h1 class="card-title mb-2">Welcome to EasyApt</h1>
+      <p class="text-muted mb-3">
+        Your secure healthcare appointment scheduling platform
+      </p>
+      
+      <div class="grid grid-2 mt-3">
+        <div class="card">
+          <h2>For Patients</h2>
+          <p class="text-muted mb-2">
+            Book, reschedule, or cancel appointments with ease. Search for providers and manage your healthcare schedule in one place.
+          </p>
+          <a href="/login.html" class="btn btn-primary btn-block">Get Started</a>
+        </div>
+
+        <div class="card">
+          <h2>For Providers</h2>
+          <p class="text-muted mb-2">
+            Manage your schedule, view upcoming appointments, and provide better care with streamlined appointment management.
+          </p>
+          <a href="/login.html" class="btn btn-secondary btn-block">Provider Login</a>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <h3>Features</h3>
+        <div class="grid grid-3 mt-2">
+          <div class="card">
+            <h4>🔒 Secure</h4>
+            <p class="text-muted">Your health information is protected with industry-standard encryption and security practices.</p>
+          </div>
+          <div class="card">
+            <h4>📅 Easy Scheduling</h4>
+            <p class="text-muted">Find available time slots and book appointments with just a few clicks.</p>
+          </div>
+          <div class="card">
+            <h4>📱 Always Accessible</h4>
+            <p class="text-muted">Access your appointments anytime, anywhere from any device.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-3 text-muted">
+      <p>&copy; 2025 EasyApt. A secure healthcare scheduling platform.</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { isLoggedIn } from './js/api.js';
+
+    // Check if user is already logged in
+    if (isLoggedIn()) {
+      // Add a "Go to Dashboard" button
+      const card = document.querySelector('.card');
+      const dashboardBtn = document.createElement('a');
+      dashboardBtn.href = '/appointments.html';
+      dashboardBtn.className = 'btn btn-success btn-block mt-3';
+      dashboardBtn.textContent = 'Go to My Appointments';
+      card.appendChild(dashboardBtn);
+    }
+  </script>
+</body>
+</html>

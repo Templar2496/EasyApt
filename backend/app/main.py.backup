@@ -1,0 +1,1316 @@
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+
+from .database import init_db
+from . import models
+from .auth import router as auth_router
+from .profile import router as profile_router
+from .appointments import router as appointments_router
+
+app = FastAPI(title="EasyApt API")
+
+
+@app.on_event("startup")
+def on_startup():
+    init_db()
+
+
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(profile_router, prefix="/profile", tags=["profiles"])
+app.include_router(appointments_router, tags=["appointments & providers"])
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+@app.get("/", response_class=HTMLResponse)
+def home_page():
+    return """
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>EasyApt</title>
+      </head>
+      <body>
+        <h1>Welcome to EasyApt</h1>
+        <p>
+          <a href="/login">Go to Login</a> |
+          <a href="/my-profile">My Profile</a> |
+          <a href="/register">Create Account</a> |
+          <a href="/my-appointments">View My Appointments</a>
+          <a href="/book-appointment">Book Appointment</a>
+        </p>
+      </body>
+    </html>
+    """
+
+@app.get("/login", response_class=HTMLResponse)
+def login_page():
+    return """
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>EasyApt Login</title>
+        <meta charset="utf-8" />
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 40px auto;
+          }
+          label {
+            display: block;
+            margin-top: 12px;
+          }
+          input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+          }
+          button {
+            margin-top: 16px;
+            padding: 10px 16px;
+          }
+          .message {
+            margin-top: 16px;
+            font-size: 0.9rem;
+          }
+          pre {
+            background: #f4f4f4;
+            padding: 8px;
+            overflow-x: auto;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>EasyApt Login</h1>
+        <p>
+          <a href="/">Home</a> |
+          <a href="/register">Create Account</a>
+          <a href="/my-profile">My Profile</a> |
+          <a href="/my-appointments">My Appointments</a>
+        </p>
+        <form id="login-form">
+          <label for="email">Email</label>
+          <input id="email" type="email" value="testpatient@example.com" required />
+
+          <label for="password">Password</label>
+          <input id="password" type="password" value="SuperSecret123!" required />
+
+          <button type="submit">Log In</button>
+        </form>
+
+        <div class="message" id="message"></div>
+
+        <script>
+          const form = document.getElementById('login-form');
+          const messageDiv = document.getElementById('message');
+
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            messageDiv.textContent = 'Logging in...';
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+              const response = await fetch('/auth/login', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                  username: email,
+                  password: password
+                })
+              });
+
+              const data = await response.json();
+
+              if (!response.ok) {
+                messageDiv.textContent = 'Login failed: ' + (data.detail || 'Unknown error');
+                return;
+              }
+
+              // Store the token in localStorage (simple for demo)
+              localStorage.setItem('easyapt_token', data.access_token);
+
+              messageDiv.innerHTML = 'Login successful!<br/>Token stored in browser.';
+              messageDiv.innerHTML += '<br/><br/><a href="/my-appointments">View My Appointments</a>';
+              // Optional: fetch the current user to show it works
+              const meResponse = await fetch('/auth/me', {
+                headers: {
+                  'Authorization': 'Bearer ' + data.access_token
+                }
+              });
+
+              const meData = await meResponse.json();
+              messageDiv.innerHTML += '<br/><br/>Current user:<br/><pre>' +
+                JSON.stringify(meData, null, 2) + '</pre>';
+
+            } catch (err) {
+              console.error(err);
+              messageDiv.textContent = 'Error contacting server.';
+            }
+          });
+        </script>
+      </body>
+    </html>
+    """
+
+@app.get("/my-appointments", response_class=HTMLResponse)
+def my_appointments_page():
+    return """
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>My Appointments - EasyApt</title>
+        <meta charset="utf-8" />
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+          }
+          h1 {
+            margin-bottom: 8px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+          }
+          th {
+            background-color: #f5f5f5;
+          }
+          tr:nth-child(even) {
+            background-color: #fafafa;
+          }
+          button {
+            padding: 6px 10px;
+            margin-right: 4px;
+            cursor: pointer;
+          }
+          .danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c2c7;
+            color: #721c24;
+          }
+          .secondary {
+            background-color: #e2e3e5;
+            border: 1px solid #d6d8db;
+            color: #383d41;
+          }
+          .message {
+            margin-top: 12px;
+            font-size: 0.9rem;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>My Appointments</h1>
+        <p>
+          <a href="/">Home</a> |
+          <a href="/book-appointment">Book Appointment</a> |
+          <a href="/my-profile">My Profile</a> |
+          <a href="/login">Login</a>
+        </p>
+
+        <p class="message" id="status-message"></p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Provider</th>
+              <th>Date / Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="appointments-body">
+          </tbody>
+        </table>
+
+        <script>
+          const statusMessage = document.getElementById('status-message');
+          const tbody = document.getElementById('appointments-body');
+
+          function getToken() {
+            return localStorage.getItem('easyapt_token');
+          }
+
+          function formatDateTime(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) {
+              return iso;
+            }
+            return d.toLocaleString();
+          }
+
+          async function loadAppointments() {
+            const token = getToken();
+            if (!token) {
+              statusMessage.innerHTML = 'You are not logged in. <a href="/login">Go to login</a>.';
+              return;
+            }
+
+            statusMessage.textContent = 'Loading appointments...';
+            tbody.innerHTML = '';
+
+            try {
+              const resp = await fetch('/appointments/my', {
+                headers: {
+                  'Authorization': 'Bearer ' + token
+                }
+              });
+
+              if (!resp.ok) {
+                statusMessage.textContent = 'Error loading appointments.';
+                return;
+              }
+
+              const data = await resp.json();
+              if (!Array.isArray(data) || data.length === 0) {
+                statusMessage.textContent = 'You have no appointments scheduled.';
+                return;
+              }
+
+              statusMessage.textContent = '';
+              data.forEach(appt => {
+                const tr = document.createElement('tr');
+
+                const tdId = document.createElement('td');
+                tdId.textContent = appt.id;
+
+                const tdProvider = document.createElement('td');
+                // If you later join provider name in the API, you can show it here.
+                // For now we show provider_id.
+                tdProvider.textContent = appt.provider_name || ('Provider #' + appt.provider_id);
+
+                const tdTime = document.createElement('td');
+                tdTime.textContent = formatDateTime(appt.start_time);
+
+                const tdStatus = document.createElement('td');
+                tdStatus.textContent = appt.status;
+
+                const tdActions = document.createElement('td');
+                if (appt.status === 'booked') {
+                  const resBtn = document.createElement('button');
+                  resBtn.textContent = 'Reschedule';
+                  resBtn.className = 'secondary';
+                  resBtn.addEventListener('click', () => rescheduleAppointment(appt));
+
+                  const cancelBtn = document.createElement('button');
+                  cancelBtn.textContent = 'Cancel';
+                  cancelBtn.className = 'danger';
+                  cancelBtn.addEventListener('click', () => cancelAppointment(appt.id));
+
+                  tdActions.appendChild(resBtn);
+                  tdActions.appendChild(cancelBtn);
+                } else {
+                  tdActions.textContent = '-';
+                }
+
+                tr.appendChild(tdId);
+                tr.appendChild(tdProvider);
+                tr.appendChild(tdTime);
+                tr.appendChild(tdStatus);
+                tr.appendChild(tdActions);
+
+                tbody.appendChild(tr);
+              });
+
+            } catch (err) {
+              console.error(err);
+              statusMessage.textContent = 'Error contacting server.';
+            }
+          }
+
+          async function cancelAppointment(id) {
+            const token = getToken();
+            if (!token) {
+              statusMessage.innerHTML = 'You are not logged in. <a href="/login">Go to login</a>.';
+              return;
+            }
+
+            if (!confirm('Are you sure you want to cancel this appointment?')) {
+              return;
+            }
+
+            statusMessage.textContent = 'Cancelling appointment...';
+
+            try {
+              const resp = await fetch('/appointments/' + id, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': 'Bearer ' + token
+                }
+              });
+
+              if (!resp.ok) {
+                const data = await resp.json().catch(() => ({}));
+                const detail = data.detail || 'Unknown error';
+                statusMessage.textContent = 'Cancel failed: ' + detail;
+                return;
+              }
+
+              statusMessage.textContent = 'Appointment cancelled.';
+              await loadAppointments();
+
+            } catch (err) {
+              console.error(err);
+              statusMessage.textContent = 'Error cancelling appointment.';
+            }
+          }
+
+          function computeEndTimeFromStart(startIso) {
+            const d = new Date(startIso);
+            if (isNaN(d.getTime())) {
+              return startIso;
+            }
+            d.setMinutes(d.getMinutes() + 30);
+            return d.toISOString();
+          }
+
+          async function rescheduleAppointment(appt) {
+            const token = getToken();
+            if (!token) {
+              statusMessage.innerHTML = 'You are not logged in. <a href="/login">Go to login</a>.';
+              return;
+            }
+
+            const current = new Date(appt.start_time);
+            const currentDate = isNaN(current.getTime())
+              ? ''
+              : current.toISOString().slice(0, 10); // YYYY-MM-DD
+            const currentTime = isNaN(current.getTime())
+              ? ''
+              : current.toTimeString().slice(0, 5); // HH:MM
+
+            const newDate = prompt(
+              'Enter new date (YYYY-MM-DD):',
+              currentDate || '2025-12-05'
+            );
+            if (!newDate) {
+              return;
+            }
+
+            const newTime = prompt(
+              'Enter new time (HH:MM, 24h):',
+              currentTime || '09:00'
+            );
+            if (!newTime) {
+              return;
+            }
+
+            const startIso = newDate + 'T' + newTime + ':00';
+            const endIso = computeEndTimeFromStart(startIso);
+
+            statusMessage.textContent = 'Rescheduling appointment...';
+
+            try {
+              const resp = await fetch('/appointments/' + appt.id + '/reschedule', {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                  start_time: startIso,
+                  end_time: endIso
+                })
+              });
+
+              const data = await resp.json().catch(() => ({}));
+
+              if (!resp.ok) {
+                const detail = data.detail || 'Unknown error';
+                statusMessage.textContent = 'Reschedule failed: ' + detail;
+                return;
+              }
+
+              statusMessage.textContent = 'Appointment rescheduled.';
+              await loadAppointments();
+
+            } catch (err) {
+              console.error(err);
+              statusMessage.textContent = 'Error rescheduling appointment.';
+            }
+          }
+
+          // Load appointments on page load
+          loadAppointments();
+        </script>
+      </body>
+    </html>
+    """
+
+
+@app.get("/register", response_class=HTMLResponse)
+def register_page():
+    return """
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Create Account - EasyApt</title>
+        <meta charset="utf-8" />
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 40px auto;
+          }
+          label {
+            display: block;
+            margin-top: 12px;
+          }
+          input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+          }
+          button {
+            margin-top: 16px;
+            padding: 10px 16px;
+          }
+          .message {
+            margin-top: 16px;
+            font-size: 0.9rem;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Create Account</h1>
+        <p>
+          <a href="/">Home</a> |
+          <a href="/login">Already have an account? Login</a>
+        </p>
+
+        <form id="register-form">
+          <label for="email">Email</label>
+          <input id="email" type="email" required />
+
+          <label for="password">Password</label>
+          <input id="password" type="password" required />
+
+          <label for="password2">Confirm Password</label>
+          <input id="password2" type="password" required />
+
+          <button type="submit">Create Account</button>
+        </form>
+
+        <div id="message" class="message"></div>
+
+        <script>
+          const form = document.getElementById('register-form');
+          const messageDiv = document.getElementById('message');
+
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            messageDiv.textContent = '';
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const password2 = document.getElementById('password2').value;
+
+            if (password !== password2) {
+              messageDiv.textContent = 'Passwords do not match.';
+              return;
+            }
+
+            messageDiv.textContent = 'Creating account...';
+
+            try {
+              const response = await fetch('/auth/register', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  email: email,
+                  password: password
+                })
+              });
+
+              const data = await response.json();
+
+              if (!response.ok) {
+                const detail = data.detail || 'Unknown error';
+                messageDiv.textContent = 'Registration failed: ' + detail;
+                return;
+              }
+
+              messageDiv.innerHTML = 'Account created successfully!<br/>' +
+                'You can now <a href="/login">log in here</a>.';
+
+            } catch (err) {
+              console.error(err);
+              messageDiv.textContent = 'Error contacting server.';
+            }
+          });
+        </script>
+      </body>
+    </html>
+    """
+
+@app.get("/my-profile", response_class=HTMLResponse)
+def my_profile_page():
+    return """
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>My Profile - EasyApt</title>
+        <meta charset="utf-8" />
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 40px auto;
+          }
+          label {
+            display: block;
+            margin-top: 12px;
+          }
+          input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+          }
+          button {
+            margin-top: 16px;
+            padding: 10px 16px;
+          }
+          .message {
+            margin-top: 16px;
+            font-size: 0.9rem;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>My Profile</h1>
+        <p>
+          <a href="/">Home</a> |
+          <a href="/login">Login</a> |
+          <a href="/my-appointments">My Appointments</a>
+        </p>
+
+        <div id="status" class="message">Loading profile...</div>
+
+        <form id="profile-form" style="display:none;">
+          <label for="full_name">Full Name</label>
+          <input id="full_name" type="text" />
+
+          <label for="date_of_birth">Date of Birth</label>
+          <input id="date_of_birth" type="date" />
+
+          <label for="phone">Phone</label>
+          <input id="phone" type="text" />
+
+          <label for="insurance">Insurance</label>
+          <input id="insurance" type="text" />
+
+          <button type="submit">Save Profile</button>
+        </form>
+
+        <div id="save-message" class="message"></div>
+
+        <script>
+          const statusDiv = document.getElementById('status');
+          const form = document.getElementById('profile-form');
+          const saveMessageDiv = document.getElementById('save-message');
+
+          async function loadProfile() {
+            const token = localStorage.getItem('easyapt_token');
+            if (!token) {
+              statusDiv.innerHTML = 'You are not logged in. <a href="/login">Go to login</a>.';
+              return;
+            }
+
+            statusDiv.textContent = 'Loading profile...';
+
+            try {
+              const response = await fetch('/profile/me', {
+                headers: {
+                  'Authorization': 'Bearer ' + token
+                }
+              });
+
+              // If no profile exists yet – treat that as "create new"
+              if (response.status === 404) {
+                statusDiv.textContent = 'No profile found yet. Please enter your information.';
+                form.style.display = 'block';
+                return;
+              }
+
+              // If token is bad / expired
+              if (response.status === 401) {
+                statusDiv.innerHTML = 'You are not logged in or your session expired. <a href="/login">Go to login</a>.';
+                return;
+              }
+
+              // Any other error: still show empty form so user can try to save
+              if (!response.ok) {
+                let detail = '';
+                try {
+                  const errData = await response.json();
+                  detail = errData.detail || '';
+                } catch (_) {}
+                statusDiv.textContent = 'Error loading profile. ' + detail + ' You can still fill it out below.';
+                form.style.display = 'block';
+                return;
+              }
+
+              const data = await response.json();
+
+              // Fill the form with existing data
+              document.getElementById('full_name').value = data.full_name || '';
+              if (data.date_of_birth) {
+                document.getElementById('date_of_birth').value = data.date_of_birth;
+              }
+              document.getElementById('phone').value = data.phone || '';
+              document.getElementById('insurance').value = data.insurance || '';
+
+              statusDiv.textContent = '';
+              form.style.display = 'block';
+
+            } catch (err) {
+              console.error(err);
+              statusDiv.textContent = 'Error loading profile. You can still fill it out below.';
+              form.style.display = 'block';
+            }
+          }
+
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            saveMessageDiv.textContent = '';
+
+            const token = localStorage.getItem('easyapt_token');
+            if (!token) {
+              saveMessageDiv.innerHTML = 'You are not logged in. <a href="/login">Go to login</a>.';
+              return;
+            }
+
+            const payload = {
+              full_name: document.getElementById('full_name').value,
+              date_of_birth: document.getElementById('date_of_birth').value || null,
+              phone: document.getElementById('phone').value,
+              insurance: document.getElementById('insurance').value || null
+            };
+
+            saveMessageDiv.textContent = 'Saving...';
+
+            try {
+              const response = await fetch('/profile/me', {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(payload)
+              });
+
+              const data = await response.json();
+
+              if (!response.ok) {
+                const detail = data.detail || 'Unknown error';
+                saveMessageDiv.textContent = 'Error saving profile: ' + detail;
+                return;
+              }
+
+              saveMessageDiv.textContent = 'Profile saved successfully.';
+
+            } catch (err) {
+              console.error(err);
+              saveMessageDiv.textContent = 'Error saving profile.';
+            }
+          });
+
+          window.addEventListener('DOMContentLoaded', loadProfile);
+        </script>
+      </body>
+    </html>
+    """
+
+@app.get("/book-appointment", response_class=HTMLResponse)
+def book_appointment_page():
+    return """
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Book Appointment - EasyApt</title>
+        <meta charset="utf-8" />
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+          }
+          h1, h2, h3 {
+            margin-bottom: 8px;
+          }
+          .search-section, .calendar-section {
+            margin-top: 24px;
+            padding: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+          }
+          label {
+            display: block;
+            margin-bottom: 8px;
+          }
+          input[type="text"], input[type="date"] {
+            padding: 8px;
+            width: 100%;
+            max-width: 300px;
+          }
+          button {
+            padding: 8px 14px;
+            margin-top: 8px;
+            cursor: pointer;
+          }
+          .provider-list {
+            margin-top: 12px;
+          }
+          .provider-card {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+          }
+          .slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 8px;
+            margin-top: 12px;
+          }
+          .slot {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 0.9rem;
+          }
+          .slot.booked {
+            background: #f8d7da;
+            color: #721c24;
+          }
+          .slot.available {
+            background: #d4edda;
+            color: #155724;
+          }
+          .slot button {
+            margin-top: 6px;
+            width: 100%;
+          }
+          .message {
+            margin-top: 12px;
+            font-size: 0.9rem;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Book an Appointment</h1>
+        <p>
+          <a href="/">Home</a> |
+          <a href="/login">Login</a> |
+          <a href="/my-profile">My Profile</a> |
+          <a href="/my-appointments">My Appointments</a>
+        </p>
+
+        <div class="search-section">
+          <h2>1. Find a Provider</h2>
+          <p>Type part of the provider's name and click search.</p>
+          <label>
+            Provider name:
+            <input type="text" id="provider-query" placeholder="e.g. Alice, Bob, Carter" />
+          </label>
+          <button id="search-button">Search</button>
+          <div id="search-message" class="message"></div>
+          <div id="provider-results" class="provider-list"></div>
+        </div>
+
+        <div class="calendar-section" id="calendar-section" style="display:none;">
+          <h2>2. Choose a Date & Time</h2>
+          <h3 id="selected-provider-name"></h3>
+          <label>
+            Date:
+            <input type="date" id="date-picker" />
+          </label>
+          <div id="calendar-message" class="message"></div>
+          <div id="slots-container" class="slots-grid"></div>
+        </div>
+
+        <script>
+          const searchInput = document.getElementById('provider-query');
+          const searchButton = document.getElementById('search-button');
+          const searchMessage = document.getElementById('search-message');
+          const providerResults = document.getElementById('provider-results');
+
+          const calendarSection = document.getElementById('calendar-section');
+          const selectedProviderName = document.getElementById('selected-provider-name');
+          const datePicker = document.getElementById('date-picker');
+          const calendarMessage = document.getElementById('calendar-message');
+          const slotsContainer = document.getElementById('slots-container');
+
+          let selectedProvider = null;
+          let providerAppointments = [];
+
+          const timeSlots = [
+            "09:00",
+            "09:30",
+            "10:00",
+            "10:30",
+            "11:00",
+            "11:30",
+            "13:00",
+            "13:30",
+            "14:00",
+            "14:30",
+            "15:00",
+            "15:30",
+            "16:00",
+            "16:30"
+          ];
+
+          function requireToken() {
+            const token = localStorage.getItem('easyapt_token');
+            return token;
+          }
+
+          function formatTimeLabel(timeStr) {
+            // Simple format: "HH:MM" -> "HH:MM"
+            return timeStr;
+          }
+
+          function getTodayISODate() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return yyyy + '-' + mm + '-' + dd;
+          }
+
+          async function searchProviders() {
+            const token = requireToken();
+            if (!token) {
+              searchMessage.innerHTML = 'You are not logged in. <a href="/login">Go to login</a>.';
+              return;
+            }
+
+            const q = searchInput.value.trim();
+            if (!q) {
+              searchMessage.textContent = 'Please enter a provider name to search.';
+              return;
+            }
+
+            searchMessage.textContent = 'Searching...';
+            providerResults.innerHTML = '';
+            calendarSection.style.display = 'none';
+            selectedProvider = null;
+            providerAppointments = [];
+
+            try {
+              const response = await fetch('/providers/search?q=' + encodeURIComponent(q), {
+                headers: {
+                  'Authorization': 'Bearer ' + token
+                }
+              });
+
+              if (!response.ok) {
+                searchMessage.textContent = 'Error searching providers.';
+                return;
+              }
+
+              const providers = await response.json();
+
+              if (!Array.isArray(providers) || providers.length === 0) {
+                searchMessage.textContent = 'No providers found.';
+                return;
+              }
+
+              searchMessage.textContent = 'Select a provider:';
+
+              providers.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'provider-card';
+                const specialty = p.specialty || '';
+                div.innerHTML = '<strong>' + p.name + '</strong>' +
+                  (specialty ? ' – ' + specialty : '') +
+                  '<br/><button data-id="' + p.id + '">Select</button>';
+                const btn = div.querySelector('button');
+                btn.addEventListener('click', () => selectProvider(p));
+                providerResults.appendChild(div);
+              });
+
+            } catch (err) {
+              console.error(err);
+              searchMessage.textContent = 'Error contacting server.';
+            }
+          }
+
+          async function selectProvider(provider) {
+            const token = requireToken();
+            if (!token) {
+              calendarMessage.innerHTML = 'You are not logged in. <a href="/login">Go to login</a>.';
+              return;
+            }
+
+            selectedProvider = provider;
+            selectedProviderName.textContent = provider.name;
+            calendarSection.style.display = 'block';
+            calendarMessage.textContent = 'Loading existing appointments...';
+            slotsContainer.innerHTML = '';
+
+            // Set date picker to today if empty
+            if (!datePicker.value) {
+              datePicker.value = getTodayISODate();
+            }
+
+            try {
+              const response = await fetch('/providers/' + provider.id + '/appointments', {
+                headers: {
+                  'Authorization': 'Bearer ' + token
+                }
+              });
+
+              if (!response.ok) {
+                calendarMessage.textContent = 'Could not load provider appointments.';
+                providerAppointments = [];
+              } else {
+                providerAppointments = await response.json();
+                calendarMessage.textContent = '';
+              }
+
+              renderSlots();
+
+            } catch (err) {
+              console.error(err);
+              calendarMessage.textContent = 'Error loading appointments.';
+            }
+          }
+
+          function renderSlots() {
+            if (!selectedProvider) {
+              return;
+            }
+
+            const dateStr = datePicker.value;
+            if (!dateStr) {
+              calendarMessage.textContent = 'Please choose a date.';
+              return;
+            }
+
+            slotsContainer.innerHTML = '';
+            calendarMessage.textContent = 'Green = available, red = booked.';
+
+            timeSlots.forEach(timeStr => {
+              const slotDiv = document.createElement('div');
+              slotDiv.className = 'slot';
+
+              const startString = dateStr + 'T' + timeStr + ':00';
+              const endString = computeEndTime(dateStr, timeStr);
+
+              const isBooked = providerAppointments.some(appt => {
+                return appt.status === 'booked' &&
+                  typeof appt.start_time === 'string' &&
+                  appt.start_time.startsWith(dateStr + 'T' + timeStr);
+              });
+
+              if (isBooked) {
+                slotDiv.classList.add('booked');
+                slotDiv.innerHTML = '<strong>' + formatTimeLabel(timeStr) + '</strong><br/>Booked';
+              } else {
+                slotDiv.classList.add('available');
+                slotDiv.innerHTML = '<strong>' + formatTimeLabel(timeStr) + '</strong><br/>Available';
+                const btn = document.createElement('button');
+                btn.textContent = 'Book this slot';
+                btn.addEventListener('click', () => bookSlot(startString, endString));
+                slotDiv.appendChild(btn);
+              }
+
+              slotsContainer.appendChild(slotDiv);
+            });
+          }
+
+          function computeEndTime(dateStr, timeStr) {
+            // timeStr is "HH:MM"
+            const [h, m] = timeStr.split(':').map(Number);
+            let endH = h;
+            let endM = m + 30;
+            if (endM >= 60) {
+              endM -= 60;
+              endH += 1;
+            }
+            return (
+              dateStr +
+              'T' +
+              String(endH).padStart(2, '0') +
+              ':' +
+              String(endM).padStart(2, '0') +
+              ':00'
+            );
+          }
+
+          async function bookSlot(startTime, endTime) {
+            const token = requireToken();
+            if (!token) {
+              calendarMessage.innerHTML = 'You are not logged in. <a href="/login">Go to login</a>.';
+              return;
+            }
+            if (!selectedProvider) {
+              calendarMessage.textContent = 'Please select a provider first.';
+              return;
+            }
+
+            calendarMessage.textContent = 'Booking appointment...';
+
+            try {
+              const response = await fetch('/appointments/book', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                  provider_id: selectedProvider.id,
+                  start_time: startTime,
+                  end_time: endTime
+                })
+              });
+
+              const data = await response.json();
+
+              if (!response.ok) {
+                const detail = data.detail || 'Unknown error';
+                calendarMessage.textContent = 'Booking failed: ' + detail;
+                return;
+              }
+
+              calendarMessage.textContent = 'Appointment booked successfully! Refreshing slots...';
+
+              // Refresh provider appointments and re-render
+              const apptResp = await fetch('/providers/' + selectedProvider.id + '/appointments', {
+                headers: {
+                  'Authorization': 'Bearer ' + token
+                }
+              });
+              if (apptResp.ok) {
+                providerAppointments = await apptResp.json();
+              }
+              renderSlots();
+
+            } catch (err) {
+              console.error(err);
+              calendarMessage.textContent = 'Error booking appointment.';
+            }
+          }
+
+          searchButton.addEventListener('click', searchProviders);
+          searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              searchProviders();
+            }
+          });
+          datePicker.addEventListener('change', renderSlots);
+        </script>
+      </body>
+    </html>
+    """
+
+@app.get("/provider-dashboard", response_class=HTMLResponse)
+def provider_dashboard_page():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Provider Dashboard</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { margin-bottom: 10px; }
+            #error { color: red; margin-bottom: 10px; }
+            .appt-card {
+                border: 1px solid #ccc;
+                padding: 10px;
+                border-radius: 6px;
+                margin-bottom: 8px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Provider Dashboard</h1>
+        <p>View your upcoming appointments.</p>
+
+        <div id="error"></div>
+        <div id="appointments"></div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", async () => {
+                // Get JWT token from localStorage
+                const token = localStorage.getItem("easyapt_token");
+
+                if (!token) {
+                    document.getElementById("error").innerText =
+                        "Must be logged in as a provider. Redirecting to login...";
+                    setTimeout(() => {
+                        window.location.href = "/login";
+                    }, 1500);
+                    return;
+                }
+
+                try {
+                    const res = await fetch("/provider-dashboard-list", {
+                        method: "GET",
+                        headers: {
+                            "Authorization": "Bearer " + token
+                        }
+                    });
+
+                    if (!res.ok) {
+                        document.getElementById("error").innerText =
+                            "Not authorized as provider (status " + res.status + ").";
+                        return;
+                    }
+
+                    const appts = await res.json();
+                    const container = document.getElementById("appointments");
+
+                    if (!appts.length) {
+                        container.innerHTML = "<p>No upcoming appointments.</p>";
+                        return;
+                    }
+
+                    appts.forEach(a => {
+                        const div = document.createElement("div");
+                        div.className = "appt-card";
+                        div.innerHTML = `
+                            <strong>Patient:</strong> ${a.patient_name || "Unknown"}<br>
+                            <strong>Start:</strong> ${a.start_time}<br>
+                            <strong>Reason:</strong> ${a.reason || "Not specified"}<br>
+                            <strong>Status:</strong> ${a.status}
+                        `;
+                        container.appendChild(div);
+                    });
+                } catch (err) {
+                    console.error(err);
+                    document.getElementById("error").innerText =
+                        "Error loading provider dashboard.";
+                }
+            });
+        </script>
+    </body>
+    </html>
+    """
+
+@app.get("/provider-dashboard-page", response_class=HTMLResponse)
+def provider_dashboard_page():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Provider Dashboard - EasyApt</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #f5f5f5;
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                max-width: 800px;
+                margin: 40px auto;
+                background: white;
+                padding: 20px 24px;
+                border-radius: 8px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            }
+            h1 {
+                margin-top: 0;
+            }
+            .appt-card {
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                padding: 10px 12px;
+                margin-bottom: 10px;
+                background: #fafafa;
+            }
+            .error {
+                color: #b00020;
+                margin-bottom: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Provider Dashboard</h1>
+            <p>View your upcoming appointments.</p>
+
+            <div id="error" class="error"></div>
+            <div id="appointments"></div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", async () => {
+                // Get JWT token from localStorage
+                const token = localStorage.getItem("easyapt_token");
+
+                if (!token) {
+                    document.getElementById("error").innerText =
+                        "Must be logged in as a provider. Redirecting to login...";
+                    setTimeout(() => {
+                        window.location.href = "/login";
+                    }, 1500);
+                    return;
+                }
+
+                try {
+                    const res = await fetch("/provider-dashboard-list", {
+                        method: "GET",
+                        headers: {
+                            "Authorization": "Bearer " + token
+                        }
+                    });
+
+                    if (!res.ok) {
+                        document.getElementById("error").innerText =
+                            "Not authorized as provider (status " + res.status + ").";
+                        return;
+                    }
+
+                    const appts = await res.json();
+                    const container = document.getElementById("appointments");
+
+                    if (!appts.length) {
+                        container.innerHTML = "<p>No upcoming appointments.</p>";
+                        return;
+                    }
+
+                    appts.forEach(a => {
+                        const div = document.createElement("div");
+                        div.className = "appt-card";
+                        div.innerHTML = `
+                            <strong>Patient:</strong> ${a.patient_name || "Unknown"}<br>
+                            <strong>Start:</strong> ${a.start_time}<br>
+                            <strong>Reason:</strong> ${a.reason || "Not specified"}<br>
+                            <strong>Status:</strong> ${a.status}
+                        `;
+                        container.appendChild(div);
+                    });
+                } catch (err) {
+                    console.error(err);
+                    document.getElementById("error").innerText =
+                        "Error loading provider dashboard.";
+                }
+            });
+        </script>
+    </body>
+    </html>
+    """
+

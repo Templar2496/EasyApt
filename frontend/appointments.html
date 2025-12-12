@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Appointments - EasyApt</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="container">
+      <div class="nav-links">
+        <span class="nav-brand">EasyApt</span>
+        <a href="/">Home</a>
+        <a href="/appointments.html">My Appointments</a>
+        <a href="/book-appointment.html">Book Appointment</a>
+        <a href="/profile.html">My Profile</a>
+        <a href="#" id="logout-link">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="card-title">My Appointments</h1>
+        <p class="text-muted">View and manage your scheduled appointments</p>
+      </div>
+
+      <div id="message" class="hidden"></div>
+
+      <div id="loading" class="text-center">
+        <div class="spinner"></div>
+        <p class="text-muted">Loading your appointments...</p>
+      </div>
+
+      <div id="appointments-container" class="hidden">
+        <div class="mb-2">
+          <a href="/book-appointment.html" class="btn btn-primary">
+            + Book New Appointment
+          </a>
+        </div>
+
+        <table class="table" id="appointments-table">
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th>Date & Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="appointments-body">
+          </tbody>
+        </table>
+
+        <div id="no-appointments" class="text-center hidden" style="padding: 40px;">
+          <p class="text-muted">You have no appointments scheduled.</p>
+          <a href="/book-appointment.html" class="btn btn-primary mt-2">
+            Book Your First Appointment
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="reschedule-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+    <div class="card" style="max-width: 500px; width: 90%; margin: 20px;">
+      <div class="card-header">
+        <h2>Reschedule Appointment</h2>
+      </div>
+      
+      <form id="reschedule-form">
+        <input type="hidden" id="reschedule-id">
+        
+        <div class="form-group">
+          <label for="reschedule-date" class="form-label">New Date</label>
+          <input type="date" id="reschedule-date" class="form-input" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="reschedule-time" class="form-label">New Time</label>
+          <input type="time" id="reschedule-time" class="form-input" required>
+        </div>
+        
+        <div style="display: flex; gap: 8px;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">
+            Confirm Reschedule
+          </button>
+          <button type="button" class="btn btn-secondary" id="cancel-reschedule" style="flex: 1;">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { 
+      appointments, 
+      auth,
+      requireAuth, 
+      showError, 
+      showSuccess, 
+      showInfo,
+      formatDateTime 
+    } from './js/api.js';
+
+    if (!requireAuth()) {
+      throw new Error('Not authenticated');
+    }
+
+    const loadingDiv = document.getElementById('loading');
+    const appointmentsContainer = document.getElementById('appointments-container');
+    const appointmentsBody = document.getElementById('appointments-body');
+    const noAppointments = document.getElementById('no-appointments');
+    const rescheduleModal = document.getElementById('reschedule-modal');
+    const rescheduleForm = document.getElementById('reschedule-form');
+    const logoutLink = document.getElementById('logout-link');
+
+    logoutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm('Are you sure you want to logout?')) {
+        auth.logout();
+      }
+    });
+
+    async function loadAppointments() {
+      try {
+        loadingDiv.classList.remove('hidden');
+        appointmentsContainer.classList.add('hidden');
+
+        const data = await appointments.getMyAppointments();
+
+        loadingDiv.classList.add('hidden');
+        appointmentsContainer.classList.remove('hidden');
+
+        if (!data || data.length === 0) {
+          document.getElementById('appointments-table').classList.add('hidden');
+          noAppointments.classList.remove('hidden');
+          return;
+        }
+
+        document.getElementById('appointments-table').classList.remove('hidden');
+        noAppointments.classList.add('hidden');
+
+        appointmentsBody.innerHTML = '';
+
+        data.forEach(appt => {
+          const row = document.createElement('tr');
+          
+          const providerCell = document.createElement('td');
+          providerCell.textContent = appt.provider_name || `Provider #${appt.provider_id}`;
+          
+          const dateCell = document.createElement('td');
+          dateCell.textContent = formatDateTime(appt.start_time);
+          
+          const statusCell = document.createElement('td');
+          const statusBadge = document.createElement('span');
+          statusBadge.textContent = appt.status;
+          statusBadge.style.padding = '4px 8px';
+          statusBadge.style.borderRadius = '4px';
+          statusBadge.style.fontSize = '0.85rem';
+          statusBadge.style.fontWeight = '500';
+          
+          if (appt.status === 'booked') {
+            statusBadge.style.background = '#d1fae5';
+            statusBadge.style.color = '#065f46';
+          } else if (appt.status === 'cancelled') {
+            statusBadge.style.background = '#fee2e2';
+            statusBadge.style.color = '#991b1b';
+          }
+          
+          statusCell.appendChild(statusBadge);
+          
+          const actionsCell = document.createElement('td');
+          
+          if (appt.status === 'booked') {
+            const rescheduleBtn = document.createElement('button');
+            rescheduleBtn.textContent = 'Reschedule';
+            rescheduleBtn.className = 'btn btn-secondary btn-sm';
+            rescheduleBtn.style.marginRight = '8px';
+            rescheduleBtn.addEventListener('click', () => openRescheduleModal(appt));
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.className = 'btn btn-danger btn-sm';
+            cancelBtn.addEventListener('click', () => cancelAppointment(appt.id));
+            
+            actionsCell.appendChild(rescheduleBtn);
+            actionsCell.appendChild(cancelBtn);
+          } else {
+            actionsCell.textContent = '-';
+          }
+          
+          row.appendChild(providerCell);
+          row.appendChild(dateCell);
+          row.appendChild(statusCell);
+          row.appendChild(actionsCell);
+          
+          appointmentsBody.appendChild(row);
+        });
+
+      } catch (error) {
+        console.error('Error loading appointments:', error);
+        loadingDiv.classList.add('hidden');
+        showError('message', error.message || 'Error loading appointments');
+      }
+    }
+
+    async function cancelAppointment(id) {
+      if (!confirm('Are you sure you want to cancel this appointment?')) {
+        return;
+      }
+
+      showInfo('message', 'Cancelling appointment...');
+
+      try {
+        await appointments.cancel(id);
+        showSuccess('message', 'Appointment cancelled successfully');
+        await loadAppointments();
+      } catch (error) {
+        console.error('Error cancelling appointment:', error);
+        showError('message', error.message || 'Error cancelling appointment');
+      }
+    }
+
+    function openRescheduleModal(appt) {
+      const startDate = new Date(appt.start_time);
+      
+      document.getElementById('reschedule-id').value = appt.id;
+      document.getElementById('reschedule-date').value = startDate.toISOString().split('T')[0];
+      document.getElementById('reschedule-time').value = startDate.toTimeString().slice(0, 5);
+      
+      rescheduleModal.classList.remove('hidden');
+      rescheduleModal.style.display = 'flex';
+    }
+
+    document.getElementById('cancel-reschedule').addEventListener('click', () => {
+      rescheduleModal.classList.add('hidden');
+      rescheduleModal.style.display = 'none';
+    });
+
+    rescheduleForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const id = document.getElementById('reschedule-id').value;
+      const date = document.getElementById('reschedule-date').value;
+      const time = document.getElementById('reschedule-time').value;
+      
+      const startTime = `${date}T${time}:00`;
+      
+      const startDate = new Date(startTime);
+      const endDate = new Date(startDate.getTime() + 30 * 60000);
+      const endTime = endDate.toISOString().slice(0, 19);
+      
+      showInfo('message', 'Rescheduling appointment...');
+      
+      try {
+        await appointments.reschedule(id, startTime, endTime);
+        
+        rescheduleModal.classList.add('hidden');
+        rescheduleModal.style.display = 'none';
+        
+        showSuccess('message', 'Appointment rescheduled successfully');
+        await loadAppointments();
+      } catch (error) {
+        console.error('Error rescheduling appointment:', error);
+        showError('message', error.message || 'Error rescheduling appointment');
+      }
+    });
+
+    loadAppointments();
+  </script>
+</body>
+</html>

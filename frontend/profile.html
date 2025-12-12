@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - EasyApt</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="container">
+      <div class="nav-links">
+        <span class="nav-brand">EasyApt</span>
+        <a href="/">Home</a>
+        <a href="/appointments.html">My Appointments</a>
+        <a href="/book-appointment.html">Book Appointment</a>
+        <a href="/profile.html">My Profile</a>
+        <a href="#" id="logout-link">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-sm">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="card-title">My Profile</h1>
+        <p class="text-muted">Manage your personal information</p>
+      </div>
+
+      <div id="message" class="hidden"></div>
+      <div id="loading" class="text-center">
+        <div class="spinner"></div>
+        <p class="text-muted">Loading your profile...</p>
+      </div>
+
+      <form id="profile-form" class="hidden">
+          <div class="form-group">
+              <label for="full_name" class="form-label">Full Name</label>
+              <input type="text"
+                     id="full_name"
+                     class="form-input"
+                     placeholder="John Doe" />
+          </div>
+
+          <div class="form-group">
+              <label for="date_of_birth" class="form-label">Date of Birth</label>
+              <input type="date"
+                     id="date_of_birth"
+                     class="form-input" />
+          </div>
+
+          <div class="form-group">
+              <label for="phone" class="form-label">Phone Number</label>
+              <input type="tel"
+                     id="phone"
+                     class="form-input"
+                     placeholder="(555) 123-4567" />
+          </div>
+
+          <div class="form-group">
+              <label for="insurance" class="form-label">Insurance Provider</label>
+              <input type="text"
+                     id="insurance"
+                     class="form-input"
+                     placeholder="Blue Cross Blue Shield" />
+          </div>
+          <p>Medical Information</p>
+          <div class="form-group">
+              <label for="blood_type" class="form-label">Blood Type</label>
+              <select id="blood_type" class="form-input">
+                  <option value="">-- Select --</option>
+                  <option>A+</option>
+                  <option>A-</option>
+                  <option>B+</option>
+                  <option>B-</option>
+                  <option>AB+</option>
+                  <option>AB-</option>
+                  <option>O+</option>
+                  <option>O-</option>
+              </select>
+          </div>
+
+          <div class="form-group">
+              <label for="allergies" class="form-label">Allergies</label>
+              <textarea id="allergies"
+                        class="form-input"
+                        rows="3"
+                        placeholder="Peanuts, Penicillin, Latex"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="save-btn">
+              Save Profile
+          </button>
+      </form>
+    </div>
+
+    <div class="card mt-3">
+      <h3>Account Information</h3>
+      <p class="text-muted">Email: <span id="user-email">Loading...</span></p>
+      <p class="text-muted" style="font-size: 0.85rem;">
+        Note: Your email is used for login and cannot be changed here. Contact support if you need to update it.
+      </p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { 
+      profile, 
+      auth, 
+      requireAuth, 
+      showError, 
+      showSuccess, 
+      showInfo 
+    } from './js/api.js';
+
+    if (!requireAuth()) {
+      throw new Error('Not authenticated');
+    }
+
+    const form = document.getElementById('profile-form');
+    const loadingDiv = document.getElementById('loading');
+    const messageDiv = document.getElementById('message');
+    const saveBtn = document.getElementById('save-btn');
+    const logoutLink = document.getElementById('logout-link');
+
+    logoutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm('Are you sure you want to logout?')) {
+        auth.logout();
+      }
+    });
+
+    async function loadProfile() {
+      try {
+        const user = await auth.getCurrentUser();
+        document.getElementById('user-email').textContent = user.email;
+
+        const profileData = await profile.get();
+        
+        document.getElementById('full_name').value = profileData.full_name || '';
+        document.getElementById('date_of_birth').value = profileData.date_of_birth || '';
+        document.getElementById('phone').value = profileData.phone || '';
+        document.getElementById('insurance').value = profileData.insurance || '';
+
+        loadingDiv.classList.add('hidden');
+        form.classList.remove('hidden');
+
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        
+        if (error.message.includes('404')) {
+          showInfo('message', 'No profile found. Please create one by filling out the form below.');
+          loadingDiv.classList.add('hidden');
+          form.classList.remove('hidden');
+        } else {
+          showError('message', 'Error loading profile. You can still fill out your information below.');
+          loadingDiv.classList.add('hidden');
+          form.classList.remove('hidden');
+        }
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const profileData = {
+        full_name: document.getElementById('full_name').value.trim(),
+        date_of_birth: document.getElementById('date_of_birth').value || null,
+        phone: document.getElementById('phone').value.trim(),
+        insurance: document.getElementById('insurance').value.trim() || null,
+      };
+
+      if (!profileData.full_name) {
+        showError('message', 'Please enter your full name');
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+      showInfo('message', 'Saving your profile...');
+
+      try {
+        await profile.update(profileData);
+        
+        showSuccess('message', 'Profile saved successfully!');
+        saveBtn.textContent = 'Save Profile';
+        saveBtn.disabled = false;
+
+      } catch (error) {
+        console.error('Error saving profile:', error);
+        showError('message', error.message || 'Error saving profile. Please try again.');
+        saveBtn.textContent = 'Save Profile';
+        saveBtn.disabled = false;
+      }
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>
