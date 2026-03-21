@@ -5,7 +5,7 @@ aiosignal==1.4.0
 annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.12.0
-APScheduler==3.11.1
+APScheduler==3.10.4
 argon2-cffi==25.1.0
 argon2-cffi-bindings==25.1.0
 async-timeout==5.0.1
@@ -18,9 +18,7 @@ certifi==2020.6.20
 cffi==2.0.0
 chardet==4.0.0
 click==8.0.3
-cloud-init==25.2
 colorama==0.4.4
-command-not-found==0.3
 configobj==5.0.6
 constantly==15.1.0
 cryptography==46.0.3
@@ -36,7 +34,7 @@ greenlet==3.3.0
 h11==0.16.0
 httpcore==1.0.9
 httplib2==0.20.2
-httpx==0.28.1
+httpx==0.25.1
 hyperlink==21.0.0
 idna==3.3
 importlib-metadata==4.6.4
@@ -73,14 +71,13 @@ pyOpenSSL==21.0.0
 pyparsing==2.4.7
 pyrsistent==0.18.1
 pyserial==3.5
-python-apt==2.4.0+ubuntu4
 python-debian==0.1.43+ubuntu1.1
 python-dotenv==1.2.1
 python-http-client==3.3.7
 python-jose==3.5.0
 python-magic==0.4.24
 python-multipart==0.0.20
-pytz==2022.1
+pytz==2023.3
 PyYAML==5.4.1
 requests==2.25.1
 rsa==4.9.1
@@ -94,7 +91,7 @@ sqlmodel==0.0.27
 ssh-import-id==5.11
 starlette==0.50.0
 systemd-python==234
-twilio==9.8.8
+twilio==8.10.0
 Twisted==22.1.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0

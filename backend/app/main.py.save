@@ -13,11 +13,7 @@ from .chatbot import router as chatbot_router
 from .notification_service import notification_service
 from .appointment_store import init_db as init_appointments_db
 
-app = FastAPI(
-    title="EasyApt Healthcare Scheduling",  # Updated
-    description="Secure appointment scheduling with AI assistance",  # New
-    version="2.0.0"
-)
+app = FastAPI(title="EasyApt API")
 
 # Add CORS middleware
 app.add_middleware(
@@ -31,17 +27,6 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup():
     init_db()
-    print(" Main database initialized")
-    
-    init_appointments_db()
-    print("Appointments database initialized")
-    print("Email notification scheduler started")
-
-@app.on_event("shutdown")
-def on_shutdown():
-    """Gracefully shutdown notification scheduler"""
-    notification_service.shutdown()
-    print(" Notification scheduler stopped")
 
 # Include API routers
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
@@ -53,16 +38,6 @@ app.include_router(chatbot_router)
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
-
-# AFTER:
-@app.get("/health")
-def health_check():
-    from .captcha_service import captcha_service
-    return {
-        "status": "ok",
-        "captcha_configured": bool(captcha_service.secret_key),
-        "email_scheduler": "running"
-    }
 
 # Path to frontend directory
 frontend_path = Path(__file__).parent.parent.parent / "frontend"

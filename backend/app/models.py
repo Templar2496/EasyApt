@@ -13,8 +13,14 @@ class User(SQLModel, table=True):
 
     failed_login_attempts: int = Field(default=0)
     lockout_until: Optional[datetime] = Field(default=None)
-
     last_active: Optional[datetime] = Field(default=None)
+
+    # --- 2FA fields ---
+    two_factor_enabled: bool = Field(default=False)
+    two_factor_secret: Optional[str] = Field(default=None)
+    two_factor_temp_secret: Optional[str] = Field(default=None)
+    two_factor_backup_codes: Optional[str] = Field(default=None)  # stored as JSON string
+
 
 class PatientProfile(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

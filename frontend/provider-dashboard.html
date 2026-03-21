@@ -68,12 +68,18 @@
       showInfo,
       formatDateTime,
       formatDate,
-      formatTime
+      formatTime,
+      initSessionMonitor
     } from './js/api.js';
 
     if (!requireAuth()) {
       throw new Error('Not authenticated');
     }
+
+    initSessionMonitor({
+      timeoutSeconds: 300,
+      warningSeconds: 60,
+    });
 
     const loadingDiv = document.getElementById('loading');
     const appointmentsContainer = document.getElementById('appointments-container');

@@ -17,14 +17,16 @@ class PatientProfileRead(SQLModel):
     full_name: str
     date_of_birth: date
     phone: str
-    insurance: Optional[str]
+    blood_type: str
+    insurance: str
 
 
 class PatientProfileUpdate(SQLModel):
     full_name: str
     date_of_birth: date
     phone: str
-    insurance: Optional[str] = None
+    blood_type: str
+    insurance: Optional str
 
 
 @router.get("/me", response_model=Optional[PatientProfileRead])

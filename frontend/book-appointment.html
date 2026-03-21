@@ -15,6 +15,7 @@
         <a href="/appointments.html">My Appointments</a>
         <a href="/book-appointment.html">Book Appointment</a>
         <a href="/profile.html">My Profile</a>
+        <a href="/chatbot.html">Medical Assistant</a>
         <a href="#" id="logout-link">Logout</a>
       </div>
     </div>
@@ -77,12 +78,18 @@
       requireAuth, 
       showError, 
       showSuccess, 
-      showInfo 
+      showInfo,
+      initSessionMonitor 
     } from './js/api.js';
 
     if (!requireAuth()) {
       throw new Error('Not authenticated');
     }
+
+    initSessionMonitor({
+      timeoutSeconds: 300,
+      warningSeconds: 60,
+    });
 
     const searchInput = document.getElementById('provider-query');
     const searchBtn = document.getElementById('search-btn');

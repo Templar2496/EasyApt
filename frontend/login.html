@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - EasyApt</title>
-  <script src="https://www.google.com/recaptcha/api.js?render=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></script>
+  <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
@@ -30,26 +30,33 @@
       <form id="login-form">
         <div class="form-group">
           <label for="email" class="form-label">Email Address</label>
-          <input 
-            type="email" 
-            id="email" 
-            class="form-input" 
+          <input
+            type="email"
+            id="email"
+            class="form-input"
             placeholder="you@example.com"
-            required 
+            required
             autocomplete="email"
           />
         </div>
 
         <div class="form-group">
           <label for="password" class="form-label">Password</label>
-          <input 
-            type="password" 
-            id="password" 
-            class="form-input" 
+          <input
+            type="password"
+            id="password"
+            class="form-input"
             placeholder="Enter your password"
-            required 
+            required
             autocomplete="current-password"
           />
+        </div>
+
+        <div class="form-group" style="display: flex; justify-content: center; margin: 20px 0;">
+          <div class="h-captcha"
+               data-sitekey="a3043e3a-3924-4bc6-b61a-fdf6f0900262"
+               data-theme="light">
+          </div>
         </div>
 
         <button type="submit" class="btn btn-primary btn-block" id="login-btn">
@@ -57,9 +64,30 @@
         </button>
       </form>
 
+      <form id="twofa-form" class="hidden" style="margin-top: 20px;">
+        <div class="form-group">
+          <label for="twofa-code" class="form-label">Authenticator Code</label>
+          <input
+            type="text"
+            id="twofa-code"
+            class="form-input"
+            placeholder="Enter 6-digit code or backup code"
+            autocomplete="one-time-code"
+          />
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="twofa-btn">
+          Verify 2FA
+        </button>
+
+        <button type="button" class="btn btn-secondary btn-block" id="back-to-login-btn" style="margin-top: 10px;">
+          Back to Login
+        </button>
+      </form>
+
       <div class="text-center mt-3">
         <p class="text-muted">
-          Don't have an account? 
+          Don't have an account?
           <a href="/register.html" style="color: var(--primary-color);">Create one here</a>
         </p>
       </div>
@@ -67,15 +95,36 @@
   </div>
 
   <script type="module">
-    import { auth, showError, showSuccess, showInfo } from './js/api.js';
+    import { auth, showError, showSuccess, showInfo, removeTemp2FAToken } from './js/api.js';
 
-    const form = document.getElementById('login-form');
+    const loginForm = document.getElementById('login-form');
+    const twofaForm = document.getElementById('twofa-form');
     const messageDiv = document.getElementById('message');
-    const loginBtn = document.getElementById('login-btn');
 
-    form.addEventListener('submit', async (e) => {
+    const loginBtn = document.getElementById('login-btn');
+    const twofaBtn = document.getElementById('twofa-btn');
+    const backToLoginBtn = document.getElementById('back-to-login-btn');
+
+    function switchTo2FA() {
+      loginForm.classList.add('hidden');
+      twofaForm.classList.remove('hidden');
+      document.getElementById('twofa-code').focus();
+    }
+
+    function switchToLogin() {
+      twofaForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+      document.getElementById('password').value = '';
+      document.getElementById('twofa-code').value = '';
+      removeTemp2FAToken();
+      if (window.hcaptcha) {
+        hcaptcha.reset();
+      }
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
 
@@ -86,30 +135,73 @@
         return;
       }
 
+      const recaptchaToken = hcaptcha.getResponse();
+
+      if (!recaptchaToken) {
+        showError('message', 'Please complete the CAPTCHA verification');
+        return;
+      }
+
       loginBtn.disabled = true;
       loginBtn.textContent = 'Logging in...';
-      showInfo('message', 'Verifying...');
+      showInfo('message', 'Verifying credentials...');
 
       try {
-        // Get reCAPTCHA token
-        const recaptchaToken = await grecaptcha.execute('6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', {action: 'login'});
-        console.log('CAPTCHA token obtained:', recaptchaToken ? recaptchaToken.substring(0, 20) + '...' : 'none');
-        
-        // Login with CAPTCHA token
-        const data = await auth.login(email, password, recaptchaToken);
-        
-        showSuccess('message', 'Login successful! Redirecting...');
-        
-        setTimeout(() => {
-          window.location.href = '/appointments.html';
-        }, 1000);
+        const data = await auth.loginStart(email, password, recaptchaToken);
 
+        if (data.requires_2fa) {
+          showInfo('message', 'Password verified. Enter your authenticator code to continue.');
+          switchTo2FA();
+        } else {
+          showSuccess('message', 'Login successful! Redirecting...');
+          setTimeout(() => {
+            window.location.href = '/appointments.html';
+          }, 1000);
+        }
       } catch (error) {
         console.error('Login error:', error);
         showError('message', error.message || 'Login failed. Please check your credentials');
+        if (window.hcaptcha) {
+          hcaptcha.reset();
+        }
+      } finally {
         loginBtn.disabled = false;
         loginBtn.textContent = 'Login';
       }
+    });
+
+    twofaForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const code = document.getElementById('twofa-code').value.trim();
+
+      if (!code) {
+        showError('message', 'Please enter your authenticator code or a backup code');
+        return;
+      }
+
+      twofaBtn.disabled = true;
+      twofaBtn.textContent = 'Verifying...';
+      showInfo('message', 'Verifying 2FA code...');
+
+      try {
+        await auth.verify2FA(code);
+        showSuccess('message', '2FA verified successfully! Redirecting...');
+        setTimeout(() => {
+          window.location.href = '/appointments.html';
+        }, 1000);
+      } catch (error) {
+        console.error('2FA verification error:', error);
+        showError('message', error.message || 'Invalid 2FA code');
+      } finally {
+        twofaBtn.disabled = false;
+        twofaBtn.textContent = 'Verify 2FA';
+      }
+    });
+
+    backToLoginBtn.addEventListener('click', () => {
+      switchToLogin();
+      showInfo('message', 'Returned to login step.');
     });
   </script>
 </body>
