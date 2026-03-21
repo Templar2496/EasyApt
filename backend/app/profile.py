@@ -60,6 +60,7 @@ def upsert_my_profile(
             full_name=profile_in.full_name,
             date_of_birth=profile_in.date_of_birth,
             phone=profile_in.phone,
+            blood_type=profile_in.blood_type,
             insurance=profile_in.insurance,
         )
         session.add(profile)
@@ -67,6 +68,7 @@ def upsert_my_profile(
         profile.full_name = profile_in.full_name
         profile.date_of_birth = profile_in.date_of_birth
         profile.phone = profile_in.phone
+        profile.blood_type = profile_in.blood_type
         profile.insurance = profile_in.insurance
 
     session.commit()
