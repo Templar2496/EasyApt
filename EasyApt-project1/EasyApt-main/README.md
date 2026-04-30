@@ -86,6 +86,9 @@ EasyApt streamlines healthcare appointment scheduling by providing an intuitive 
 **Project Members:**
 - Mason Rasberry - Lead Developer, Frontend, Integration
 - Emil K - Security Module, Notifications, 2FA
+- Aiden Lambrecht - Backend Dev, Health info
+- Jesus Barco - Backend Dev, Login
+- Efrain Castaneda-Reyes - Frontend, Captcha
 
 ## 📄 License
 
