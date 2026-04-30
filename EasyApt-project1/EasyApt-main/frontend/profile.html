@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - EasyApt</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .twofa-box {
+      margin-top: 20px;
+      padding: 16px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background: #fafafa;
+    }
+
+    .twofa-qr {
+      max-width: 220px;
+      margin: 16px auto;
+      display: block;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      padding: 8px;
+    }
+
+    .backup-codes {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .backup-code {
+      padding: 10px;
+      background: #f4f4f4;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-family: monospace;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .section-title {
+      margin-bottom: 8px;
+    }
+
+    .section-subtext {
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .btn-secondary {
+      background: #6b7280;
+      color: white;
+      border: none;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="container">
+      <div class="nav-links">
+        <span class="nav-brand">EasyApt</span>
+        <a href="/">Home</a>
+        <a href="/appointments.html">My Appointments</a>
+        <a href="/book-appointment.html">Book Appointment</a>
+        <a href="/profile.html">My Profile</a>
+        <a href="/chatbot.html">Medical Assistant</a>
+        <a href="#" id="logout-link">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-sm">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="card-title">My Profile</h1>
+        <p class="text-muted">Manage your personal information</p>
+      </div>
+
+      <div id="message" class="hidden"></div>
+      <div id="loading" class="text-center">
+        <div class="spinner"></div>
+        <p class="text-muted">Loading your profile...</p>
+      </div>
+
+      <form id="profile-form" class="hidden">
+        <div class="form-group">
+          <label for="full_name" class="form-label">Full Name</label>
+          <input
+            type="text"
+            id="full_name"
+            class="form-input"
+            placeholder="John Doe"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="date_of_birth" class="form-label">Date of Birth</label>
+          <input
+            type="date"
+            id="date_of_birth"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="phone" class="form-label">Phone Number</label>
+          <input
+            type="tel"
+            id="phone"
+            class="form-input"
+            placeholder="(555) 123-4567"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="insurance" class="form-label">Insurance Provider</label>
+          <input
+            type="text"
+            id="insurance"
+            class="form-input"
+            placeholder="Blue Cross Blue Shield"
+          />
+        </div>
+
+        </div>
+        
+        <div class="form-group">
+          <label for="insurance_policy_number">Insurance Policy Number:</label>
+          <input
+            type="text"
+            id="insurance_policy_number"
+            name="insurance_policy_number"
+            placeholder="Policy number"
+          />
+        </div>
+        
+        <div class="form-section">
+          <h3>Health Information</h3>
+    
+          <div class="form-group">
+              <label for="blood_type">Blood Type:</label>
+              <select id="blood_type" name="blood_type">
+                  <option value="">Select blood type</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+              </select>
+          </div>
+    
+          <div class="form-group">
+              <label for="allergies">Allergies:</label>
+              <textarea id="allergies" name="allergies" rows="3" placeholder="List any allergies (e.g., penicillin, peanuts, latex)"></textarea>
+          </div>
+    
+          <div class="form-group">
+              <label for="medications">Current Medications:</label>
+              <textarea id="medications" name="medications" rows="3" placeholder="List current medications"></textarea>
+          </div>
+    
+          <div class="form-group">
+              <label for="medical_conditions">Medical Conditions:</label>
+              <textarea id="medical_conditions" name="medical_conditions" rows="3" placeholder="List any existing medical conditions (e.g., diabetes, hypertension)"></textarea>
+          </div>
+    
+          <h4>Emergency Contact</h4>
+    
+          <div class="form-group">
+              <label for="emergency_contact_name">Emergency Contact Name:</label>
+              <input type="text" id="emergency_contact_name" name="emergency_contact_name" placeholder="Full name">
+          </div>
+    
+          <div class="form-group">
+              <label for="emergency_contact_phone">Emergency Contact Phone:</label>
+              <input type="tel" id="emergency_contact_phone" name="emergency_contact_phone" placeholder="(555) 123-4567">
+          </div>
+      </div>
+        <button type="submit" class="btn btn-primary btn-block" id="save-btn">
+          Save Profile
+        </button>
+      </form>
+    </div>
+
+    <div class="card mt-3">
+      <h3>Account Information</h3>
+      <p class="text-muted">Email: <span id="user-email">Loading...</span></p>
+      <p class="text-muted" style="font-size: 0.85rem;">
+        Note: Your email is used for login and cannot be changed here. Contact support if you need to update it.
+      </p>
+    </div>
+
+    <div class="card mt-3">
+      <h3 class="section-title">Two-Factor Authentication</h3>
+      <p class="section-subtext">
+        Add an extra layer of security with an authenticator app.
+      </p>
+
+      <div id="twofa-status-box" class="twofa-box">
+        <p><strong>Status:</strong> <span id="twofa-status-text">Loading...</span></p>
+
+        <button id="enable-2fa-btn" class="btn btn-primary hidden" type="button">
+          Enable 2FA
+        </button>
+
+        <button id="show-disable-2fa-btn" class="btn btn-danger hidden" type="button">
+          Disable 2FA
+        </button>
+
+        <button id="regen-backup-btn" class="btn btn-secondary hidden" type="button" style="margin-top:10px;">
+          Regenerate Backup Codes
+        </button>
+      </div>
+
+      <div id="twofa-setup-box" class="twofa-box hidden">
+        <h4>Set Up Authenticator App</h4>
+        <p class="text-muted">
+          Scan this QR code with Google Authenticator, Microsoft Authenticator, Authy, or another TOTP app.
+        </p>
+
+        <img id="twofa-qr-image" class="twofa-qr" alt="2FA QR Code" />
+        <p class="text-muted" style="word-break: break-all;">
+          Manual secret: <span id="twofa-secret"></span>
+        </p>
+
+        <div class="form-group">
+          <label for="setup-2fa-code" class="form-label">Enter the 6-digit code from your authenticator app</label>
+          <input
+            type="text"
+            id="setup-2fa-code"
+            class="form-input"
+            placeholder="123456"
+          />
+        </div>
+
+        <button id="confirm-2fa-setup-btn" class="btn btn-primary btn-block" type="button">
+          Confirm and Enable 2FA
+        </button>
+
+        <button id="cancel-2fa-setup-btn" class="btn btn-secondary btn-block" type="button" style="margin-top:10px;">
+          Cancel
+        </button>
+      </div>
+
+      <div id="backup-codes-box" class="twofa-box hidden">
+        <h4>Backup Codes</h4>
+        <p class="text-muted">
+          Save these backup codes somewhere safe. Each code can be used once if you lose access to your authenticator app.
+        </p>
+        <div id="backup-codes-list" class="backup-codes"></div>
+      </div>
+
+      <div id="twofa-disable-box" class="twofa-box hidden">
+        <h4>Disable 2FA</h4>
+        <p class="text-muted">
+          Enter your password and a current authenticator code to disable 2FA.
+        </p>
+
+        <div class="form-group">
+          <label for="disable-2fa-password" class="form-label">Password</label>
+          <input
+            type="password"
+            id="disable-2fa-password"
+            class="form-input"
+            placeholder="Enter your password"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="disable-2fa-code" class="form-label">Authenticator Code</label>
+          <input
+            type="text"
+            id="disable-2fa-code"
+            class="form-input"
+            placeholder="123456"
+          />
+        </div>
+
+        <button id="confirm-disable-2fa-btn" class="btn btn-danger btn-block" type="button">
+          Disable 2FA
+        </button>
+
+        <button id="cancel-disable-2fa-btn" class="btn btn-secondary btn-block" type="button" style="margin-top:10px;">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      profile,
+      auth,
+      requireAuth,
+      showError,
+      showSuccess,
+      showInfo,
+      initSessionMonitor
+    } from './js/api.js';
+
+    if (!requireAuth()) {
+      throw new Error('Not authenticated');
+    }
+
+    initSessionMonitor({
+      timeoutSeconds: 300,
+      warningSeconds: 60,
+    });
+
+    const form = document.getElementById('profile-form');
+    const loadingDiv = document.getElementById('loading');
+    const saveBtn = document.getElementById('save-btn');
+    const logoutLink = document.getElementById('logout-link');
+
+    const enable2FABtn = document.getElementById('enable-2fa-btn');
+    const showDisable2FABtn = document.getElementById('show-disable-2fa-btn');
+    const regenBackupBtn = document.getElementById('regen-backup-btn');
+
+    const twofaStatusText = document.getElementById('twofa-status-text');
+    const twofaSetupBox = document.getElementById('twofa-setup-box');
+    const backupCodesBox = document.getElementById('backup-codes-box');
+    const backupCodesList = document.getElementById('backup-codes-list');
+    const twofaDisableBox = document.getElementById('twofa-disable-box');
+
+    const twofaQrImage = document.getElementById('twofa-qr-image');
+    const twofaSecret = document.getElementById('twofa-secret');
+
+    const confirm2FASetupBtn = document.getElementById('confirm-2fa-setup-btn');
+    const cancel2FASetupBtn = document.getElementById('cancel-2fa-setup-btn');
+
+    const confirmDisable2FABtn = document.getElementById('confirm-disable-2fa-btn');
+    const cancelDisable2FABtn = document.getElementById('cancel-disable-2fa-btn');
+
+    function hide2FASetup() {
+      twofaSetupBox.classList.add('hidden');
+      document.getElementById('setup-2fa-code').value = '';
+    }
+
+    function hideDisable2FA() {
+      twofaDisableBox.classList.add('hidden');
+      document.getElementById('disable-2fa-password').value = '';
+      document.getElementById('disable-2fa-code').value = '';
+    }
+
+    function renderBackupCodes(codes) {
+      backupCodesList.innerHTML = '';
+      for (const code of codes) {
+        const div = document.createElement('div');
+        div.className = 'backup-code';
+        div.textContent = code;
+        backupCodesList.appendChild(div);
+      }
+      backupCodesBox.classList.remove('hidden');
+    }
+
+    async function load2FAStatus() {
+      try {
+        const status = await auth.get2FAStatus();
+
+        if (status.enabled) {
+          twofaStatusText.textContent = 'Enabled';
+          enable2FABtn.classList.add('hidden');
+          showDisable2FABtn.classList.remove('hidden');
+          regenBackupBtn.classList.remove('hidden');
+        } else {
+          twofaStatusText.textContent = 'Disabled';
+          enable2FABtn.classList.remove('hidden');
+          showDisable2FABtn.classList.add('hidden');
+          regenBackupBtn.classList.add('hidden');
+        }
+      } catch (error) {
+        console.error('Error loading 2FA status:', error);
+        twofaStatusText.textContent = 'Unable to load status';
+      }
+    }
+
+    async function loadProfile() {
+      try {
+        const user = await auth.getCurrentUser();
+        document.getElementById('user-email').textContent = user.email;
+
+        try {
+          const profileData = await profile.get();
+          if (profileData) {
+            document.getElementById('full_name').value = profileData.full_name || '';
+            document.getElementById('date_of_birth').value = profileData.date_of_birth || '';
+            document.getElementById('phone').value = profileData.phone || '';
+            document.getElementById('insurance').value = profileData.insurance || '';
+            document.getElementById('insurance_policy_number').value = profileData.insurance_policy_number || '';
+            document.getElementById('blood_type').value = profileData.blood_type || '';
+            document.getElementById('allergies').value = profileData.allergies || '';
+            document.getElementById('medications').value = profileData.medications || '';
+            document.getElementById('medical_conditions').value = profileData.medical_conditions || '';
+            document.getElementById('emergency_contact_name').value = profileData.emergency_contact_name || '';
+            document.getElementById('emergency_contact_phone').value = profileData.emergency_contact_phone || '';
+          }
+        } catch (error) {
+          console.error('Profile load error:', error);
+          console.log('No existing profile found yet.');
+        }
+
+        await load2FAStatus();
+
+        loadingDiv.classList.add('hidden');
+        form.classList.remove('hidden');
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        showError('message', 'Error loading profile page.');
+        loadingDiv.classList.add('hidden');
+        form.classList.remove('hidden');
+      }
+    }
+
+    logoutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm('Are you sure you want to logout?')) {
+        auth.logout();
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const profileData = {
+        full_name: document.getElementById('full_name').value.trim(),
+        date_of_birth: document.getElementById('date_of_birth').value || null,
+        phone: document.getElementById('phone').value.trim(),
+        insurance: document.getElementById('insurance').value.trim() || null,
+        insurance_policy_number: document.getElementById('insurance_policy_number')?.value.trim() || null,
+        blood_type: document.getElementById('blood_type')?.value || null,
+        allergies: document.getElementById('allergies')?.value.trim() || null,
+        medications: document.getElementById('medications')?.value.trim() || null,
+        medical_conditions: document.getElementById('medical_conditions')?.value.trim() || null,
+        emergency_contact_name: document.getElementById('emergency_contact_name')?.value.trim() || null,
+        emergency_contact_phone: document.getElementById('emergency_contact_phone')?.value.trim() || null,
+      };
+
+      if (!profileData.full_name) {
+        showError('message', 'Please enter your full name');
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+      showInfo('message', 'Saving your profile...');
+
+      try {
+        await profile.update(profileData);
+        showSuccess('message', 'Profile saved successfully!');
+      } catch (error) {
+        console.error('Error saving profile:', error);
+        showError('message', error.message || 'Error saving profile. Please try again.');
+      } finally {
+        saveBtn.textContent = 'Save Profile';
+        saveBtn.disabled = false;
+      }
+    });
+
+    enable2FABtn.addEventListener('click', async () => {
+      showInfo('message', 'Starting 2FA setup...');
+
+      try {
+        const setupData = await auth.start2FASetup();
+
+        twofaQrImage.src = `data:image/png;base64,${setupData.qr_code_base64}`;
+        twofaSecret.textContent = setupData.secret;
+
+        twofaSetupBox.classList.remove('hidden');
+        backupCodesBox.classList.add('hidden');
+        hideDisable2FA();
+
+        showInfo('message', 'Scan the QR code with your authenticator app, then enter the 6-digit code below.');
+      } catch (error) {
+        console.error('Error starting 2FA setup:', error);
+        showError('message', error.message || 'Failed to start 2FA setup.');
+      }
+    });
+
+    confirm2FASetupBtn.addEventListener('click', async () => {
+      const code = document.getElementById('setup-2fa-code').value.trim();
+
+      if (!code) {
+        showError('message', 'Please enter the 6-digit authenticator code.');
+        return;
+      }
+
+      try {
+        const result = await auth.verify2FASetup(code);
+        hide2FASetup();
+        renderBackupCodes(result.backup_codes);
+        await load2FAStatus();
+        showSuccess('message', '2FA enabled successfully! Save your backup codes now.');
+      } catch (error) {
+        console.error('Error verifying 2FA setup:', error);
+        showError('message', error.message || 'Invalid code. Please try again.');
+      }
+    });
+
+    cancel2FASetupBtn.addEventListener('click', () => {
+      hide2FASetup();
+      showInfo('message', '2FA setup cancelled.');
+    });
+
+    showDisable2FABtn.addEventListener('click', () => {
+      hide2FASetup();
+      twofaDisableBox.classList.remove('hidden');
+      showInfo('message', 'Enter your password and authenticator code to disable 2FA.');
+    });
+
+    cancelDisable2FABtn.addEventListener('click', () => {
+      hideDisable2FA();
+      showInfo('message', '2FA disable cancelled.');
+    });
+
+    confirmDisable2FABtn.addEventListener('click', async () => {
+      const password = document.getElementById('disable-2fa-password').value;
+      const code = document.getElementById('disable-2fa-code').value.trim();
+
+      if (!password || !code) {
+        showError('message', 'Please enter both your password and authenticator code.');
+        return;
+      }
+
+      try {
+        await auth.disable2FA(password, code);
+        hideDisable2FA();
+        backupCodesBox.classList.add('hidden');
+        await load2FAStatus();
+        showSuccess('message', '2FA disabled successfully.');
+      } catch (error) {
+        console.error('Error disabling 2FA:', error);
+        showError('message', error.message || 'Failed to disable 2FA.');
+      }
+    });
+
+    regenBackupBtn.addEventListener('click', async () => {
+      if (!confirm('Generate new backup codes? Your old backup codes will stop working.')) {
+        return;
+      }
+
+      try {
+        const result = await auth.regenerateBackupCodes();
+        renderBackupCodes(result.backup_codes);
+        showSuccess('message', 'New backup codes generated. Save them somewhere safe.');
+      } catch (error) {
+        console.error('Error regenerating backup codes:', error);
+        showError('message', error.message || 'Failed to regenerate backup codes.');
+      }
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Provider Dashboard - EasyApt</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    
+    .controls-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      align-items: center;
+    }
+    
+    .search-box {
+      flex: 1;
+      min-width: 200px;
+      max-width: 300px;
+    }
+    
+    .filter-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    
+    .filter-group select {
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: white;
+      font-size: 14px;
+    }
+    
+    .view-toggle {
+      display: flex;
+      gap: 4px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .view-toggle button {
+      padding: 8px 16px;
+      border: none;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    
+    .view-toggle button.active {
+      background: var(--primary-color);
+      color: white;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    .status-booked { background: #d1fae5; color: #065f46; }
+    .status-completed { background: #dbeafe; color: #1e40af; }
+    .status-cancelled { background: #fee2e2; color: #991b1b; }
+    .status-no-show { background: #fef3c7; color: #92400e; }
+    
+    .appointment-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+    }
+    
+    .appointment-card:hover {
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+    
+    .appointment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    
+    .patient-info {
+      flex: 1;
+    }
+    
+    .patient-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    }
+    
+    .appointment-time {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+    
+    .appointment-details {
+      margin: 12px 0;
+    }
+    
+    .detail-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+    }
+    
+    .detail-label {
+      font-weight: 600;
+      color: var(--text-secondary);
+      min-width: 80px;
+    }
+    
+    .detail-value {
+      color: var(--text-primary);
+    }
+    
+    .appointment-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .action-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .btn-complete {
+      background: #10b981;
+      color: white;
+    }
+    
+    .btn-complete:hover {
+      background: #059669;
+    }
+    
+    .btn-info {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .btn-info:hover {
+      background: #2563eb;
+    }
+    
+    .btn-contact {
+      background: #8b5cf6;
+      color: white;
+    }
+    
+    .btn-contact:hover {
+      background: #7c3aed;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .stat-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    .revenue-card .stat-value {
+      color: #10b981;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal.active {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border-color);
+    }
+    
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+    
+    .health-info-section {
+      margin-bottom: 20px;
+    }
+    
+    .health-info-label {
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: block;
+    }
+    
+    .health-info-value {
+      background: #f9fafb;
+      padding: 12px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+    }
+    
+    .calendar-view {
+      display: none;
+    }
+    
+    .calendar-view.active {
+      display: block;
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-top: 16px;
+    }
+    
+    .calendar-day {
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 8px;
+      min-height: 100px;
+      background: white;
+    }
+    
+    .calendar-day-header {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+    
+    .calendar-appointment {
+      background: var(--primary-color);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+    
+    .export-btn {
+      background: #059669;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    
+    .export-btn:hover {
+      background: #047857;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+    
+    .empty-state svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="container">
+      <div class="nav-links">
+        <span class="nav-brand">EasyApt Provider</span>
+        <a href="/provider-dashboard.html">Dashboard</a>
+        <a href="#" id="logout-link">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="dashboard-header">
+      <div>
+        <h1 style="margin: 0 0 8px 0;">Provider Dashboard</h1>
+        <p class="text-muted" style="margin: 0;">Manage your appointments and patients</p>
+      </div>
+      <button id="export-btn" class="export-btn">📊 Export to CSV</button>
+    </div>
+
+    <div id="message" class="hidden"></div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="total-appointments" style="color: var(--primary-color);">-</div>
+        <div class="stat-label">Total Appointments</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="today-appointments" style="color: #3b82f6;">-</div>
+        <div class="stat-label">Today</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="week-appointments" style="color: #8b5cf6;">-</div>
+        <div class="stat-label">This Week</div>
+      </div>
+      <div class="stat-card revenue-card">
+        <div class="stat-value" id="total-revenue">$0</div>
+        <div class="stat-label">Total Revenue</div>
+      </div>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="card">
+      <div class="controls-bar">
+        <input 
+          type="text" 
+          id="search-box" 
+          class="search-box" 
+          placeholder="🔍 Search patients or reasons..."
+        >
+        
+        <div class="filter-group">
+          <label style="font-weight: 600; font-size: 14px;">Status:</label>
+          <select id="status-filter">
+            <option value="all">All</option>
+            <option value="booked">Booked</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label style="font-weight: 600; font-size: 14px;">Time:</label>
+          <select id="time-filter">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label style="font-weight: 600; font-size: 14px;">Sort:</label>
+          <select id="sort-by">
+            <option value="date-asc">Date (Oldest)</option>
+            <option value="date-desc">Date (Newest)</option>
+            <option value="patient">Patient Name</option>
+          </select>
+        </div>
+        
+        <div class="view-toggle">
+          <button id="view-list" class="active">📋 List</button>
+          <button id="view-calendar">📅 Calendar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="loading" class="text-center" style="padding: 40px;">
+      <div class="spinner"></div>
+      <p class="text-muted">Loading your appointments...</p>
+    </div>
+
+    <!-- List View -->
+    <div id="list-view" class="hidden">
+      <div id="appointments-list"></div>
+      <div id="no-appointments" class="empty-state hidden">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        <p>No appointments found matching your filters.</p>
+      </div>
+    </div>
+
+    <!-- Calendar View -->
+    <div id="calendar-view" class="calendar-view">
+      <div id="calendar-grid" class="calendar-grid"></div>
+    </div>
+  </div>
+
+  <!-- Patient Health Info Modal -->
+  <div id="health-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Patient Health Information</h2>
+        <button class="modal-close" onclick="closeHealthModal()">&times;</button>
+      </div>
+      <div id="health-info-content"></div>
+    </div>
+  </div>
+
+  <!-- Contact Patient Modal -->
+  <div id="contact-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Contact Patient</h2>
+        <button class="modal-close" onclick="closeContactModal()">&times;</button>
+      </div>
+      <div id="contact-info-content"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      providers,
+      auth,
+      requireAuth,
+      showError,
+      showInfo,
+      showSuccess,
+      formatDateTime,
+      formatDate,
+      formatTime,
+      initSessionMonitor,
+    } from './js/api.js';
+
+    if (!requireAuth()) {
+      throw new Error('Not authenticated');
+    }
+
+    initSessionMonitor({
+      timeoutSeconds: 300,
+      warningSeconds: 60,
+    });
+
+    let allAppointments = [];
+    let filteredAppointments = [];
+
+    const elements = {
+      loading: document.getElementById('loading'),
+      listView: document.getElementById('list-view'),
+      calendarView: document.getElementById('calendar-view'),
+      appointmentsList: document.getElementById('appointments-list'),
+      noAppointments: document.getElementById('no-appointments'),
+      searchBox: document.getElementById('search-box'),
+      statusFilter: document.getElementById('status-filter'),
+      timeFilter: document.getElementById('time-filter'),
+      sortBy: document.getElementById('sort-by'),
+      viewList: document.getElementById('view-list'),
+      viewCalendar: document.getElementById('view-calendar'),
+      exportBtn: document.getElementById('export-btn'),
+      logoutLink: document.getElementById('logout-link')
+    };
+
+    // Logout handler
+    elements.logoutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm('Are you sure you want to logout?')) {
+        auth.logout();
+      }
+    });
+
+    // View toggle handlers
+    elements.viewList.addEventListener('click', () => switchView('list'));
+    elements.viewCalendar.addEventListener('click', () => switchView('calendar'));
+
+    function switchView(view) {
+      if (view === 'list') {
+        elements.listView.classList.remove('hidden');
+        elements.calendarView.classList.remove('active');
+        elements.viewList.classList.add('active');
+        elements.viewCalendar.classList.remove('active');
+      } else {
+        elements.listView.classList.add('hidden');
+        elements.calendarView.classList.add('active');
+        elements.viewList.classList.remove('active');
+        elements.viewCalendar.classList.add('active');
+        renderCalendar();
+      }
+    }
+
+    // Filter and search handlers
+    elements.searchBox.addEventListener('input', applyFilters);
+    elements.statusFilter.addEventListener('change', applyFilters);
+    elements.timeFilter.addEventListener('change', applyFilters);
+    elements.sortBy.addEventListener('change', applyFilters);
+
+    // Export to CSV
+    elements.exportBtn.addEventListener('click', exportToCSV);
+
+    async function loadProviderAppointments() {
+      try {
+        elements.loading.classList.remove('hidden');
+        elements.listView.classList.add('hidden');
+
+        const data = await providers.getDashboard();
+        allAppointments = data || [];
+
+        elements.loading.classList.add('hidden');
+        elements.listView.classList.remove('hidden');
+
+        applyFilters();
+        updateStats();
+
+      } catch (error) {
+        console.error('Error loading appointments:', error);
+        elements.loading.classList.add('hidden');
+
+        if (error.message && error.message.includes('401')) {
+          showError('message', 'You are not authorized to view the provider dashboard.');
+          setTimeout(() => window.location.href = '/login.html', 3000);
+        } else {
+          showError('message', error.message || 'Error loading appointments');
+        }
+      }
+    }
+
+    function applyFilters() {
+      const searchTerm = elements.searchBox.value.toLowerCase();
+      const statusFilter = elements.statusFilter.value;
+      const timeFilter = elements.timeFilter.value;
+      const sortBy = elements.sortBy.value;
+
+      // Filter appointments
+      filteredAppointments = allAppointments.filter(appt => {
+        // Search filter
+        const matchesSearch = !searchTerm || 
+          (appt.patient_name && appt.patient_name.toLowerCase().includes(searchTerm)) ||
+          (appt.reason && appt.reason.toLowerCase().includes(searchTerm));
+
+        // Status filter
+        const matchesStatus = statusFilter === 'all' || appt.status === statusFilter;
+
+        // Time filter
+        let matchesTime = true;
+        if (timeFilter !== 'all' && appt.start_time) {
+          const apptDate = new Date(appt.start_time);
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+          if (timeFilter === 'today') {
+            matchesTime = apptDate.toDateString() === now.toDateString();
+          } else if (timeFilter === 'week') {
+            const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            matchesTime = apptDate >= today && apptDate <= nextWeek;
+          } else if (timeFilter === 'month') {
+            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+            matchesTime = apptDate >= today && apptDate <= nextMonth;
+          }
+        }
+
+        return matchesSearch && matchesStatus && matchesTime;
+      });
+
+      // Sort appointments
+      filteredAppointments.sort((a, b) => {
+        if (sortBy === 'date-asc') {
+          return (a.start_time || '').localeCompare(b.start_time || '');
+        } else if (sortBy === 'date-desc') {
+          return (b.start_time || '').localeCompare(a.start_time || '');
+        } else if (sortBy === 'patient') {
+          return (a.patient_name || '').localeCompare(b.patient_name || '');
+        }
+        return 0;
+      });
+
+      renderAppointments();
+    }
+
+    function renderAppointments() {
+      elements.appointmentsList.innerHTML = '';
+
+      if (filteredAppointments.length === 0) {
+        elements.noAppointments.classList.remove('hidden');
+        return;
+      }
+
+      elements.noAppointments.classList.add('hidden');
+
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+
+      // Group by date
+      const byDate = {};
+      filteredAppointments.forEach(appt => {
+        const date = appt.start_time ? appt.start_time.split('T')[0] : 'Unknown';
+        if (!byDate[date]) byDate[date] = [];
+        byDate[date].push(appt);
+      });
+
+      Object.keys(byDate).sort().forEach(date => {
+        const dateSection = document.createElement('div');
+        dateSection.style.marginBottom = '24px';
+
+        const dateHeader = document.createElement('h3');
+        dateHeader.textContent = formatDate(date + 'T00:00:00');
+        dateHeader.style.marginBottom = '12px';
+        dateHeader.style.paddingBottom = '8px';
+        dateHeader.style.borderBottom = '2px solid var(--border-color)';
+
+        if (date === today) {
+          dateHeader.textContent += ' (Today)';
+          dateHeader.style.color = '#3b82f6';
+        }
+
+        dateSection.appendChild(dateHeader);
+
+        byDate[date].forEach(appt => {
+          const card = createAppointmentCard(appt);
+          dateSection.appendChild(card);
+        });
+
+        elements.appointmentsList.appendChild(dateSection);
+      });
+    }
+
+    function createAppointmentCard(appt) {
+      const card = document.createElement('div');
+      card.className = 'appointment-card';
+
+      const statusClass = `status-${appt.status || 'booked'}`;
+
+      card.innerHTML = `
+        <div class="appointment-header">
+          <div class="patient-info">
+            <div class="patient-name">${appt.patient_name || 'Patient Name Not Available'}</div>
+            <div class="appointment-time">🕐 ${formatTime(appt.start_time)}</div>
+          </div>
+          <span class="status-badge ${statusClass}">${(appt.status || 'booked').toUpperCase()}</span>
+        </div>
+        
+        <div class="appointment-details">
+          ${appt.reason ? `
+            <div class="detail-row">
+              <span class="detail-label">Reason:</span>
+              <span class="detail-value">${appt.reason}</span>
+            </div>
+          ` : ''}
+          <div class="detail-row">
+            <span class="detail-label">Duration:</span>
+            <span class="detail-value">30 minutes</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Fee:</span>
+            <span class="detail-value">$75.00</span>
+          </div>
+        </div>
+        
+        <div class="appointment-actions">
+          ${appt.status === 'booked' ? `
+            <button class="action-btn btn-complete" onclick="window.markComplete(${appt.id})">
+              ✓ Mark Complete
+            </button>
+          ` : ''}
+          <button class="action-btn btn-info" onclick="window.showHealthInfo(${appt.patient_id}, '${appt.patient_name || 'Patient'}')">
+            📋 Health Info
+          </button>
+          <button class="action-btn btn-contact" onclick="window.showContact('${appt.patient_name || 'Patient'}', '${appt.patient_email || ''}')">
+            ✉️ Contact
+          </button>
+        </div>
+      `;
+
+      return card;
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+
+      // Simple 7-day week view
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const now = new Date();
+
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(now);
+        date.setDate(now.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day';
+
+        const header = document.createElement('div');
+        header.className = 'calendar-day-header';
+        header.textContent = `${days[date.getDay()]} ${date.getDate()}`;
+        dayEl.appendChild(header);
+
+        const dayAppts = filteredAppointments.filter(appt => 
+          appt.start_time && appt.start_time.startsWith(dateStr)
+        );
+
+        dayAppts.forEach(appt => {
+          const apptEl = document.createElement('div');
+          apptEl.className = 'calendar-appointment';
+          apptEl.textContent = `${formatTime(appt.start_time)} - ${appt.patient_name || 'Patient'}`;
+          apptEl.title = appt.reason || 'No reason provided';
+          dayEl.appendChild(apptEl);
+        });
+
+        grid.appendChild(dayEl);
+      }
+    }
+
+    function updateStats() {
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      const todayCount = allAppointments.filter(appt =>
+        appt.start_time && appt.start_time.startsWith(today)
+      ).length;
+
+      const weekCount = allAppointments.filter(appt => {
+        if (!appt.start_time) return false;
+        const apptDate = new Date(appt.start_time);
+        return apptDate >= now && apptDate <= nextWeek;
+      }).length;
+
+      // Calculate revenue (assuming $75 per appointment)
+      const completedCount = allAppointments.filter(appt => 
+        appt.status === 'completed' || appt.status === 'booked'
+      ).length;
+      const totalRevenue = completedCount * 75;
+
+      document.getElementById('total-appointments').textContent = allAppointments.length;
+      document.getElementById('today-appointments').textContent = todayCount;
+      document.getElementById('week-appointments').textContent = weekCount;
+      document.getElementById('total-revenue').textContent = `$${totalRevenue.toLocaleString()}`;
+    }
+
+    function exportToCSV() {
+      const headers = ['Date', 'Time', 'Patient', 'Reason', 'Status', 'Fee'];
+      const rows = filteredAppointments.map(appt => [
+        appt.start_time ? appt.start_time.split('T')[0] : '',
+        appt.start_time ? formatTime(appt.start_time) : '',
+        appt.patient_name || 'Unknown',
+        appt.reason || 'N/A',
+        appt.status || 'booked',
+        '$75.00'
+      ]);
+
+      let csv = headers.join(',') + '\n';
+      rows.forEach(row => {
+        csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `appointments-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      
+      showSuccess('message', 'Appointments exported successfully!');
+    }
+
+    // Global functions for buttons
+    window.markComplete = async function(appointmentId) {
+      if (!confirm('Mark this appointment as completed?')) return;
+
+      try {
+        const token = localStorage.getItem('easyapt_token');
+        const response = await fetch(`/${appointmentId}/complete`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          showSuccess('message', 'Appointment marked as completed!');
+          loadProviderAppointments();
+        } else {
+          showError('message', 'Failed to update appointment');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showError('message', 'Error updating appointment');
+      }
+    };
+
+    window.showHealthInfo = async function(patientId, patientName) {
+      const modal = document.getElementById('health-modal');
+      const content = document.getElementById('health-info-content');
+
+      try {
+        const token = localStorage.getItem('easyapt_token');
+        const response = await fetch(`/auth/patients/${patientId}/health`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          content.innerHTML = `
+            <h3 style="margin-bottom: 16px;">${patientName}</h3>
+            
+            <div class="health-info-section">
+              <span class="health-info-label">Blood Type</span>
+              <div class="health-info-value">${data.blood_type || 'Not provided'}</div>
+            </div>
+            
+            <div class="health-info-section">
+              <span class="health-info-label">Allergies</span>
+              <div class="health-info-value">${data.allergies || 'None reported'}</div>
+            </div>
+            
+            <div class="health-info-section">
+              <span class="health-info-label">Current Medications</span>
+              <div class="health-info-value">${data.medications || 'None reported'}</div>
+            </div>
+            
+            <div class="health-info-section">
+              <span class="health-info-label">Medical Conditions</span>
+              <div class="health-info-value">${data.medical_conditions || 'None reported'}</div>
+            </div>
+            
+            <div class="health-info-section">
+              <span class="health-info-label">Emergency Contact</span>
+              <div class="health-info-value">
+                ${data.emergency_contact_name || 'Not provided'}<br>
+                ${data.emergency_contact_phone || 'No phone'}
+              </div>
+            </div>
+          `;
+        } else {
+          content.innerHTML = '<p class="text-muted">Health information not available.</p>';
+        }
+
+        modal.classList.add('active');
+      } catch (error) {
+        content.innerHTML = '<p class="text-muted">Error loading health information.</p>';
+        modal.classList.add('active');
+      }
+    };
+
+    window.showContact = function(patientName, patientEmail) {
+      if (!patientEmail || patientEmail === 'undefined' || patientEmail === '') {
+        alert('Email not available for this patient');
+        return;
+      }
+      
+      window.location.href = `mailto:${patientEmail}`;
+    };
+
+    window.closeHealthModal = function() {
+      document.getElementById('health-modal').classList.remove('active');
+    };
+
+    window.closeContactModal = function() {
+      document.getElementById('contact-modal').classList.remove('active');
+    };
+
+    // Close modals on outside click
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('active');
+        }
+      });
+    });
+
+    // Load appointments on page load
+    loadProviderAppointments();
+  </script>
+</body>
+</html>

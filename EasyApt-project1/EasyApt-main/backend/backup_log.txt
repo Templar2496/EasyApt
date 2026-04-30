@@ -1,0 +1,301 @@
+========================================
+Backup started at Wed Apr 22 17:26:29 CDT 2026
+
+ EasyApt Database Backup System
+============================================================
+============================================================
+ DATABASE BACKUP SUCCESSFUL
+============================================================
+ Source: easyapt.db
+ Backup: backups/easyapt_backup_20260422_172629.db
+ Source size: 40.00 KB
+ Backup size: 40.00 KB
+ Timestamp: 2026-04-22 17:26:29
+============================================================
+
+ Verifying backup integrity...
+ Backup verified successfully!
+ Tables found: 4
+   - user: 3 records
+   - patientprofile: 1 records
+   - provider: 1 records
+   - appointment: 4 records
+
+============================================================
+ AVAILABLE BACKUPS
+============================================================
+1. easyapt_backup_20260422_172629.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+2. easyapt_backup_20260422_172016.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+3. easyapt_backup_20260422_172008.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+4. easyapt_backup_20260422_171953.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+5. easyapt_backup_20260422_171909.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+============================================================
+ No cleanup needed. Current backups: 5
+
+ Backup operation completed successfully!
+Backup completed at Wed Apr 22 17:26:29 CDT 2026
+========================================
+========================================
+Backup started at Wed Apr 22 18:00:01 CDT 2026
+
+ EasyApt Database Backup System
+============================================================
+============================================================
+ DATABASE BACKUP SUCCESSFUL
+============================================================
+ Source: easyapt.db
+ Backup: backups/easyapt_backup_20260422_180001.db
+ Source size: 48.00 KB
+ Backup size: 48.00 KB
+ Timestamp: 2026-04-22 18:00:01
+============================================================
+
+ Verifying backup integrity...
+ Backup verified successfully!
+ Tables found: 6
+   - user: 3 records
+   - patientprofile: 1 records
+   - provider: 1 records
+   - appointment: 4 records
+   - app_transaction: 0 records
+   - sqlite_sequence: 0 records
+
+============================================================
+ AVAILABLE BACKUPS
+============================================================
+1. easyapt_backup_20260422_180001.db
+   Size: 48.00 KB | Created: 2026-04-22 17:57:00
+2. easyapt_backup_20260422_173356.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+3. easyapt_backup_20260422_172629.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+4. easyapt_backup_20260422_172016.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+5. easyapt_backup_20260422_172008.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+6. easyapt_backup_20260422_171953.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+7. easyapt_backup_20260422_171909.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+============================================================
+ No cleanup needed. Current backups: 7
+
+ Backup operation completed successfully!
+Backup completed at Wed Apr 22 18:00:01 CDT 2026
+========================================
+========================================
+Backup started at Thu Apr 23 12:00:01 CDT 2026
+
+ EasyApt Database Backup System
+============================================================
+============================================================
+ DATABASE BACKUP SUCCESSFUL
+============================================================
+ Source: easyapt.db
+ Backup: backups/easyapt_backup_20260423_120001.db
+ Source size: 48.00 KB
+ Backup size: 48.00 KB
+ Timestamp: 2026-04-23 12:00:01
+============================================================
+
+ Verifying backup integrity...
+ Backup verified successfully!
+ Tables found: 6
+   - user: 4 records
+   - patientprofile: 1 records
+   - provider: 1 records
+   - appointment: 17 records
+   - app_transaction: 13 records
+   - sqlite_sequence: 1 records
+
+============================================================
+ AVAILABLE BACKUPS
+============================================================
+1. easyapt_backup_20260423_120001.db
+   Size: 48.00 KB | Created: 2026-04-23 11:56:53
+2. easyapt_backup_20260422_180001.db
+   Size: 48.00 KB | Created: 2026-04-22 17:57:00
+3. easyapt_backup_20260422_173356.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+4. easyapt_backup_20260422_172629.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+5. easyapt_backup_20260422_172016.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+6. easyapt_backup_20260422_172008.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+7. easyapt_backup_20260422_171953.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+8. easyapt_backup_20260422_171909.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+============================================================
+
+ Cleaning up 1 old backup(s)...
+   Deleted: easyapt_backup_20260422_171909.db
+ Cleanup complete. Kept 7 most recent backups.
+
+ Backup operation completed successfully!
+Backup completed at Thu Apr 23 12:00:01 CDT 2026
+========================================
+========================================
+Backup started at Fri Apr 24 18:00:03 CDT 2026
+
+ EasyApt Database Backup System
+============================================================
+============================================================
+ DATABASE BACKUP SUCCESSFUL
+============================================================
+ Source: easyapt.db
+ Backup: backups/easyapt_backup_20260424_180003.db
+ Source size: 48.00 KB
+ Backup size: 48.00 KB
+ Timestamp: 2026-04-24 18:00:03
+============================================================
+
+ Verifying backup integrity...
+ Backup verified successfully!
+ Tables found: 6
+   - user: 4 records
+   - patientprofile: 1 records
+   - provider: 1 records
+   - appointment: 17 records
+   - app_transaction: 13 records
+   - sqlite_sequence: 1 records
+
+============================================================
+ AVAILABLE BACKUPS
+============================================================
+1. easyapt_backup_20260424_180003.db
+   Size: 48.00 KB | Created: 2026-04-23 12:20:10
+2. easyapt_backup_20260423_120001.db
+   Size: 48.00 KB | Created: 2026-04-23 11:56:53
+3. easyapt_backup_20260422_180001.db
+   Size: 48.00 KB | Created: 2026-04-22 17:57:00
+4. easyapt_backup_20260422_173356.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+5. easyapt_backup_20260422_172629.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+6. easyapt_backup_20260422_172016.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+7. easyapt_backup_20260422_172008.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+8. easyapt_backup_20260422_171953.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+============================================================
+
+ Cleaning up 1 old backup(s)...
+   Deleted: easyapt_backup_20260422_171953.db
+ Cleanup complete. Kept 7 most recent backups.
+
+ Backup operation completed successfully!
+Backup completed at Fri Apr 24 18:00:03 CDT 2026
+========================================
+========================================
+Backup started at Tue Apr 28 21:24:55 CDT 2026
+
+ EasyApt Database Backup System
+============================================================
+============================================================
+ DATABASE BACKUP SUCCESSFUL
+============================================================
+ Source: easyapt.db
+ Backup: backups/easyapt_backup_20260428_212455.db
+ Source size: 48.00 KB
+ Backup size: 48.00 KB
+ Timestamp: 2026-04-28 21:24:55
+============================================================
+
+ Verifying backup integrity...
+ Backup verified successfully!
+ Tables found: 6
+   - user: 4 records
+   - patientprofile: 1 records
+   - provider: 1 records
+   - appointment: 17 records
+   - app_transaction: 13 records
+   - sqlite_sequence: 1 records
+
+============================================================
+ AVAILABLE BACKUPS
+============================================================
+1. easyapt_backup_20260428_212455.db
+   Size: 48.00 KB | Created: 2026-04-23 12:20:10
+2. easyapt_backup_20260428_211658.db
+   Size: 48.00 KB | Created: 2026-04-23 12:20:10
+3. easyapt_backup_20260424_180003.db
+   Size: 48.00 KB | Created: 2026-04-23 12:20:10
+4. easyapt_backup_20260423_120001.db
+   Size: 48.00 KB | Created: 2026-04-23 11:56:53
+5. easyapt_backup_20260422_180001.db
+   Size: 48.00 KB | Created: 2026-04-22 17:57:00
+6. easyapt_backup_20260422_173356.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+7. easyapt_backup_20260422_172629.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+8. easyapt_backup_20260422_172016.db
+   Size: 40.00 KB | Created: 2026-04-22 17:08:51
+============================================================
+
+ Cleaning up 1 old backup(s)...
+   Deleted: easyapt_backup_20260422_172016.db
+ Cleanup complete. Kept 7 most recent backups.
+
+ Backup operation completed successfully!
+Backup completed at Tue Apr 28 21:24:55 CDT 2026
+========================================
+========================================
+Backup started at Wed Apr 29 00:00:02 CDT 2026
+
+ EasyApt Database Backup System
+============================================================
+============================================================
+ DATABASE BACKUP SUCCESSFUL
+============================================================
+ Source: easyapt.db
+ Backup: backups/easyapt_backup_20260429_000002.db
+ Source size: 48.00 KB
+ Backup size: 48.00 KB
+ Timestamp: 2026-04-29 00:00:02
+============================================================
+
+ Verifying backup integrity...
+ Backup verified successfully!
+ Tables found: 6
+   - user: 4 records
+   - patientprofile: 1 records
+   - provider: 1 records
+   - appointment: 17 records
+   - app_transaction: 13 records
+   - sqlite_sequence: 1 records
+
+============================================================
+ AVAILABLE BACKUPS
+============================================================
+1. easyapt_backup_20260429_000002.db
+   Size: 48.00 KB | Created: 2026-04-29 00:00:02
+2. easyapt_backup_20260428_223257.db
+   Size: 48.00 KB | Created: 2026-04-28 22:32:57
+3. easyapt_backup_20260428_215257.db
+   Size: 48.00 KB | Created: 2026-04-28 21:52:57
+4. easyapt_backup_20260428_212455.db
+   Size: 48.00 KB | Created: 2026-04-28 21:24:55
+5. easyapt_backup_20260428_211658.db
+   Size: 48.00 KB | Created: 2026-04-28 21:16:58
+6. easyapt_backup_20260424_180003.db
+   Size: 48.00 KB | Created: 2026-04-24 18:00:03
+7. easyapt_backup_20260423_120001.db
+   Size: 48.00 KB | Created: 2026-04-23 12:00:01
+8. easyapt_backup_20260422_180001.db
+   Size: 48.00 KB | Created: 2026-04-22 18:00:01
+
+ Cleaning up 1 old backup(s)...
+   Deleted: easyapt_backup_20260422_180001.db
+ Cleanup complete. Kept 7 most recent backups.
+
+ Backup operation completed successfully!
+Backup completed at Wed Apr 29 00:00:02 CDT 2026
+========================================

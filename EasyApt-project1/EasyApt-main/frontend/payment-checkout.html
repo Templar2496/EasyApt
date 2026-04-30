@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - EasyApt</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        .payment-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .payment-details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        
+        .payment-details h3 {
+            margin-top: 0;
+            color: #2c5f2d;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #2c5f2d;
+        }
+        
+        #card-element {
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+        
+        #card-errors {
+            color: #dc3545;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .btn-pay {
+            width: 100%;
+            padding: 15px;
+            background: #2c5f2d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .btn-pay:hover {
+            background: #1e4620;
+        }
+        
+        .btn-pay:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .test-card-info {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .test-card-info h4 {
+            margin-top: 0;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="container">
+            <div class="nav-links">
+                <span class="nav-brand">EasyApt</span>
+                <a href="/appointments.html">Back to Appointments</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="payment-container">
+        <h2>Complete Your Payment</h2>
+        
+        <div class="payment-details" id="paymentDetails">
+            <h3>Appointment Details</h3>
+            <div class="detail-row">
+                <span>Provider:</span>
+                <span id="providerName">Loading...</span>
+            </div>
+            <div class="detail-row">
+                <span>Date & Time:</span>
+                <span id="appointmentTime">Loading...</span>
+            </div>
+            <div class="detail-row">
+                <span>Consultation Fee:</span>
+                <span id="amount">$0.00</span>
+            </div>
+        </div>
+
+        <form id="payment-form">
+            <div id="card-element"></div>
+            <div id="card-errors" role="alert"></div>
+            
+            <button type="submit" class="btn-pay" id="submit-button">
+                Pay Now
+            </button>
+        </form>
+
+        <div class="test-card-info">
+            <h4>🧪 Test Mode</h4>
+            <p><strong>Test Card Number:</strong> 4242 4242 4242 4242</p>
+            <p><strong>Expiry:</strong> Any future date (e.g., 12/34)</p>
+            <p><strong>CVC:</strong> Any 3 digits (e.g., 123)</p>
+            <p><strong>ZIP:</strong> Any 5 digits (e.g., 12345)</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('🔍 Payment script loaded');
+        
+        // Get payment details from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const providerId = urlParams.get('provider_id');
+        const startTime = urlParams.get('start_time');
+        const endTime = urlParams.get('end_time');
+        const reason = urlParams.get('reason');
+        
+        console.log('🔍 Provider ID:', providerId);
+        console.log('🔍 Start Time:', startTime);
+
+        let stripe;
+        let elements;
+        let clientSecret;
+
+        async function initializePayment() {
+            console.log('🔍 Initializing payment...');
+            const token = localStorage.getItem('easyapt_token');
+            
+            if (!token) {
+                console.log('❌ No token found, redirecting to login');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            console.log('✅ Token found');
+
+            try {
+                // Get Stripe publishable key
+                console.log('🔍 Fetching Stripe publishable key...');
+                const keyResponse = await fetch('/payments/publishable-key');
+                const keyData = await keyResponse.json();
+                console.log('✅ Got publishable key:', keyData.publishable_key?.substring(0, 20) + '...');
+                stripe = Stripe(keyData.publishable_key);
+
+                // Create payment intent
+                console.log('🔍 Creating payment intent...');
+                const intentResponse = await fetch('/payments/create-payment-intent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        provider_id: parseInt(providerId),
+                        start_time: startTime,
+                        end_time: endTime
+                    })
+                });
+
+                const intentData = await intentResponse.json();
+                console.log('✅ Payment intent created:', intentData);
+                clientSecret = intentData.client_secret;
+
+                // Update UI with payment details
+                document.getElementById('providerName').textContent = intentData.provider_name;
+                document.getElementById('appointmentTime').textContent = new Date(startTime).toLocaleString();
+                document.getElementById('amount').textContent = `$${intentData.amount.toFixed(2)}`;
+
+                // Initialize Stripe Elements
+                console.log('🔍 Initializing Stripe Elements...');
+                elements = stripe.elements();
+                const cardElement = elements.create('card', {
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            color: '#32325d',
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                            '::placeholder': {
+                                color: '#aab7c4'
+                            }
+                        }
+                    }
+                });
+                cardElement.mount('#card-element');
+                console.log('✅ Card element mounted');
+
+                // Handle card errors
+                cardElement.on('change', (event) => {
+                    const displayError = document.getElementById('card-errors');
+                    if (event.error) {
+                        displayError.textContent = event.error.message;
+                    } else {
+                        displayError.textContent = '';
+                    }
+                });
+
+            } catch (error) {
+                console.error('❌ Payment initialization error:', error);
+                alert('Error initializing payment: ' + error.message);
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('payment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log('🔍 Form submitted');
+
+            const submitButton = document.getElementById('submit-button');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Processing...';
+
+            try {
+                console.log('🔍 Confirming card payment...');
+                const {error, paymentIntent} = await stripe.confirmCardPayment(clientSecret, {
+                    payment_method: {
+                        card: elements.getElement('card')
+                    }
+                });
+
+                if (error) {
+                    console.error('❌ Payment error:', error);
+                    document.getElementById('card-errors').textContent = error.message;
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Pay Now';
+                } else if (paymentIntent.status === 'succeeded') {
+                    console.log('✅ Payment succeeded!');
+                    // Payment successful - now book the appointment
+                    await bookAppointment();
+                }
+            } catch (error) {
+                console.error('❌ Payment error:', error);
+                alert('Payment failed: ' + error.message);
+                submitButton.disabled = false;
+                submitButton.textContent = 'Pay Now';
+            }
+        });
+
+        async function bookAppointment() {
+            console.log('🔍 Booking appointment...');
+            const token = localStorage.getItem('easyapt_token');
+
+            try {
+                const response = await fetch('/appointments/book', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        provider_id: parseInt(providerId),
+                        start_time: startTime,
+                        end_time: endTime,
+                        reason: reason
+                    })
+                });
+
+                if (response.ok) {
+                    console.log('✅ Appointment booked!');
+                    alert('Payment successful! Your appointment has been booked.');
+                    window.location.href = 'appointments.html';
+                } else {
+                    const error = await response.json();
+                    console.error('❌ Booking failed:', error);
+                    alert('Payment succeeded but booking failed: ' + error.detail);
+                }
+            } catch (error) {
+                console.error('❌ Booking error:', error);
+                alert('Payment succeeded but booking failed. Please contact support.');
+            }
+        }
+
+        // Initialize on page load
+        console.log('🔍 Starting initialization...');
+        initializePayment();
+    </script>
+</body>
+</html>
