@@ -1,0 +1,55 @@
+
+======================================================================
+Compliance Check - 2026-04-28 21:16:13
+======================================================================
+Password Requirements: PASS - 0 users with weak/missing passwords
+2FA Adoption: WARNING - 1/4 users (25.0%) have 2FA enabled
+Data Integrity: PASS - No integrity issues found
+Backup Compliance: WARNING - 7 backups found, latest is 128.9 hours old
+Session Security: PASS - 0 currently locked accounts, 2 stale sessions (>30 days)
+HIPAA Compliance (Data Protection): PASS - 1 patient profiles contain PHI (Protected Health Information)
+Overall: 4/6 passed
+
+======================================================================
+Compliance Check - 2026-04-28 21:18:28
+======================================================================
+Password Requirements: PASS - 0 users with weak/missing passwords
+2FA Adoption: WARNING - 1/4 users (25.0%) have 2FA enabled
+Data Integrity: PASS - No integrity issues found
+Backup Compliance: WARNING - 7 backups found, latest is 129.0 hours old
+Session Security: PASS - 0 currently locked accounts, 2 stale sessions (>30 days)
+HIPAA Compliance (Data Protection): PASS - 1 patient profiles contain PHI (Protected Health Information)
+Overall: 4/6 passed
+
+======================================================================
+Compliance Check - 2026-04-28 21:29:12
+======================================================================
+Password Requirements: PASS - 0 users with weak/missing passwords
+2FA Adoption: WARNING - 1/4 users (25.0%) have 2FA enabled
+Data Integrity: PASS - No integrity issues found
+Backup Compliance: WARNING - 7 backups found, latest is 129.2 hours old
+Session Security: PASS - 0 currently locked accounts, 2 stale sessions (>30 days)
+HIPAA Compliance (Data Protection): PASS - 1 patient profiles contain PHI (Protected Health Information)
+Overall: 4/6 passed
+
+======================================================================
+Compliance Check - 2026-04-28 21:50:35
+======================================================================
+Password Requirements: PASS - 0 users with weak/missing passwords
+2FA Adoption: WARNING - 1/4 users (25.0%) have 2FA enabled
+Data Integrity: PASS - No integrity issues found
+Backup Compliance: PASS - 7 backups found, latest is 0.4 hours old
+Session Security: PASS - 0 currently locked accounts, 2 stale sessions (>30 days)
+HIPAA Compliance (Data Protection): PASS - 1 patient profiles contain PHI (Protected Health Information)
+Overall: 5/6 passed
+
+======================================================================
+Compliance Check - 2026-04-29 13:16:49
+======================================================================
+Password Requirements: PASS - 0 users with weak/missing passwords
+2FA Adoption: WARNING - 0/4 users (0.0%) have 2FA enabled
+Data Integrity: PASS - No integrity issues found
+Backup Compliance: WARNING - 7 backups found, latest is 13.3 hours old
+Session Security: PASS - 0 currently locked accounts, 1 stale sessions (>30 days)
+HIPAA Compliance (Data Protection): PASS - 1 patient profiles contain PHI (Protected Health Information)
+Overall: 4/6 passed

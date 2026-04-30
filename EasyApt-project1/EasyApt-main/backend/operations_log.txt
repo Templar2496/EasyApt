@@ -1,0 +1,40 @@
+
+======================================================================
+Operations Check - 2026-04-28 21:20:35
+======================================================================
+Database Size: HEALTHY - 48.00 KB
+Database Records: HEALTHY - Users: 4, Appointments: 17, Providers: 1, Transactions: 13
+System Resources: HEALTHY - CPU: 0.0%, Memory: 7.0%
+Disk Space: HEALTHY - 2.7% used, 929.68 GB free
+Backup System: HEALTHY - 7 backups, 0.30 MB total
+Appointment Metrics: WARNING - Total: 17, Booked: 4, Cancelled: 13 (76.5%), Today: 0
+Transaction Health: HEALTHY - 13 transactions, $600.00 total, 100.0% success rate
+Overall: 6/7 healthy
+
+======================================================================
+Operations Check - 2026-04-28 21:28:18
+======================================================================
+Database Size: HEALTHY - 48.00 KB
+Database Records: HEALTHY - Users: 4, Appointments: 17, Providers: 1, Transactions: 13
+System Resources: HEALTHY - CPU: 8.4%, Memory: 7.7%
+Disk Space: HEALTHY - 2.7% used, 929.68 GB free
+Backup System: HEALTHY - 7 backups, 0.31 MB total
+Appointment Metrics: WARNING - Total: 17, Booked: 4, Cancelled: 13 (76.5%), Today: 0
+Transaction Health: HEALTHY - 13 transactions, $600.00 total, 100.0% success rate
+Overall: 6/7 healthy
+Traceback (most recent call last):
+  File "/home/mjr0315/EasyApt/EasyApt-main/backend/operations_monitor.py", line 8, in <module>
+    import psutil
+ModuleNotFoundError: No module named 'psutil'
+
+======================================================================
+Operations Check - 2026-04-29 13:19:35
+======================================================================
+Database Size: HEALTHY - 48.00 KB
+Database Records: HEALTHY - Users: 4, Appointments: 17, Providers: 1, Transactions: 13
+System Resources: HEALTHY - CPU: 0.0%, Memory: 7.4%
+Disk Space: HEALTHY - 2.7% used, 929.85 GB free
+Backup System: HEALTHY - 7 backups, 0.33 MB total
+Appointment Metrics: WARNING - Total: 17, Booked: 1, Cancelled: 13 (76.5%), Today: 0
+Transaction Health: HEALTHY - 13 transactions, $600.00 total, 100.0% success rate
+Overall: 6/7 healthy
